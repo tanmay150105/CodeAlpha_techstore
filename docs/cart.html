@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Review your selected items and complete your purchase">
+  <meta name="keywords" content="tech store, shopping cart, checkout, payment, computer components">
+  <meta name="robots" content="index, follow">
+  <meta property="og:title" content="TechStore | Shopping Cart">
+  <meta property="og:description" content="Review your selected items and complete your purchase">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://yourdomain.com/cart.html">
+  <meta property="og:image" content="https://yourdomain.com/favicon.png">
+  <link rel="canonical" href="https://yourdomain.com/cart.html">
+  <link rel="icon" href="favicon.ico" type="image/x-icon">
+  <title>TechStore | Shopping Cart</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header>
+    <h1>🛍️ TechStore Cart</h1>
+    <nav class="navbar">
+      <ul>
+        <li><a href="index.html">Home</a></li>
+        <li><a href="products.html">Products</a></li>
+        <li><a href="cart.html">Cart 🛒</a></li>
+      </ul>
+    </nav>
+    <!-- User Info Display -->
+    <div id="header-user-info" class="header-user-info hidden">
+      <span>👤 <span id="header-user-name"></span></span>
+      <button id="header-logout" class="btn-mini">Logout</button>
+    </div>
+  </header>
+  
+
+  <main>
+    <section class="cart-items">
+      <h2>Your Selected Items</h2>
+      <div class="product-grid" id="cart-products">
+        <!-- Cart items will be loaded here by JavaScript -->
+        <p class="loading-message">Loading cart...</p>
+      </div>
+    </section>
+
+    <section class="checkout">
+      <h3 id="cart-total">Total: ₹0</h3>
+      <button class="btn" id="checkout-btn">Proceed to Checkout</button>
+    </section>
+
+    <!-- Payment Section (hidden initially) -->
+    <section class="payment-section hidden" id="payment-section">
+      <h2>💳 Payment Details</h2>
+      
+      <div class="payment-methods">
+        <h3>Select Payment Method</h3>
+        <div class="payment-options">
+          <label class="payment-option">
+            <input type="radio" name="payment-method" value="card" checked>
+            <span class="payment-label">💳 Credit/Debit Card</span>
+          </label>
+          <label class="payment-option">
+            <input type="radio" name="payment-method" value="upi">
+            <span class="payment-label">📱 UPI Payment</span>
+          </label>
+          <label class="payment-option">
+            <input type="radio" name="payment-method" value="netbanking">
+            <span class="payment-label">🏦 Net Banking</span>
+          </label>
+          <label class="payment-option">
+            <input type="radio" name="payment-method" value="cod">
+            <span class="payment-label">🚚 Cash on Delivery</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Card Payment Form -->
+      <div class="payment-form" id="card-form">
+        <h3>Card Details</h3>
+        <form id="payment-form" class="card-payment-form">
+          <div class="form-row">
+            <label for="card-number">Card Number</label>
+            <input type="text" id="card-number" placeholder="1234 5678 9012 3456" maxlength="19" required>
+          </div>
+          
+          <div class="form-row-group">
+            <div class="form-row">
+              <label for="expiry-date">Expiry Date</label>
+              <input type="text" id="expiry-date" placeholder="MM/YY" maxlength="5" required>
+            </div>
+            <div class="form-row">
+              <label for="cvv">CVV</label>
+              <input type="text" id="cvv" placeholder="123" maxlength="3" required>
+            </div>
+          </div>
+          
+          <div class="form-row">
+            <label for="card-name">Cardholder Name</label>
+            <input type="text" id="card-name" placeholder="John Doe" required>
+          </div>
+
+          <div class="billing-address">
+            <h4>Billing Address</h4>
+            <div class="form-row">
+              <label for="billing-address">Address</label>
+              <textarea id="billing-address" placeholder="Enter your billing address" required></textarea>
+            </div>
+            <div class="form-row-group">
+              <div class="form-row">
+                <label for="billing-city">City</label>
+                <input type="text" id="billing-city" placeholder="Mumbai" required>
+              </div>
+              <div class="form-row">
+                <label for="billing-pincode">PIN Code</label>
+                <input type="text" id="billing-pincode" placeholder="400001" maxlength="6" required>
+              </div>
+            </div>
+          </div>
+
+          <div class="payment-summary">
+            <div class="summary-row">
+              <span>Subtotal:</span>
+              <span id="payment-subtotal">₹0</span>
+            </div>
+            <div class="summary-row">
+              <span>Shipping:</span>
+              <span>₹99</span>
+            </div>
+            <div class="summary-row">
+              <span>Tax (18%):</span>
+              <span id="payment-tax">₹0</span>
+            </div>
+            <div class="summary-row total">
+              <span>Total Amount:</span>
+              <span id="payment-final-total">₹0</span>
+            </div>
+          </div>
+
+          <div class="payment-actions">
+            <button type="button" class="btn-secondary" id="back-to-cart">← Back to Cart</button>
+            <button type="submit" class="btn-primary" id="complete-payment">Complete Payment 🔒</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- UPI Payment Form -->
+      <div class="payment-form hidden" id="upi-form">
+        <h3>UPI Payment</h3>
+        <form class="upi-payment-form">
+          <div class="upi-options">
+            <div class="form-row">
+              <label for="upi-id">UPI ID</label>
+              <input type="text" id="upi-id" placeholder="yourname@paytm / yourname@gpay" required>
+            </div>
+            <p class="upi-note">💡 You will be redirected to your UPI app to complete the payment</p>
+          </div>
+
+          <div class="payment-summary">
+            <div class="summary-row">
+              <span>Subtotal:</span>
+              <span id="upi-subtotal">₹0</span>
+            </div>
+            <div class="summary-row">
+              <span>Shipping:</span>
+              <span>₹99</span>
+            </div>
+            <div class="summary-row">
+              <span>Tax (18%):</span>
+              <span id="upi-tax">₹0</span>
+            </div>
+            <div class="summary-row total">
+              <span>Total Amount:</span>
+              <span id="upi-final-total">₹0</span>
+            </div>
+          </div>
+
+          <div class="payment-actions">
+            <button type="button" class="btn-secondary" id="upi-back-to-cart">← Back to Cart</button>
+            <button type="submit" class="btn-primary" id="upi-complete-payment">Pay with UPI 📱</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Net Banking Form -->
+      <div class="payment-form hidden" id="netbanking-form">
+        <h3>Net Banking</h3>
+        <form class="netbanking-payment-form">
+          <div class="form-row">
+            <label for="bank-select">Select Your Bank</label>
+            <select id="bank-select" required>
+              <option value="">Choose your bank</option>
+              <option value="sbi">State Bank of India</option>
+              <option value="hdfc">HDFC Bank</option>
+              <option value="icici">ICICI Bank</option>
+              <option value="axis">Axis Bank</option>
+              <option value="kotak">Kotak Mahindra Bank</option>
+              <option value="pnb">Punjab National Bank</option>
+              <option value="other">Other Banks</option>
+            </select>
+          </div>
+          <p class="bank-note">🏦 You will be redirected to your bank's secure website</p>
+
+          <div class="payment-summary">
+            <div class="summary-row">
+              <span>Subtotal:</span>
+              <span id="netbanking-subtotal">₹0</span>
+            </div>
+            <div class="summary-row">
+              <span>Shipping:</span>
+              <span>₹99</span>
+            </div>
+            <div class="summary-row">
+              <span>Tax (18%):</span>
+              <span id="netbanking-tax">₹0</span>
+            </div>
+            <div class="summary-row total">
+              <span>Total Amount:</span>
+              <span id="netbanking-final-total">₹0</span>
+            </div>
+          </div>
+
+          <div class="payment-actions">
+            <button type="button" class="btn-secondary" id="netbanking-back-to-cart">← Back to Cart</button>
+            <button type="submit" class="btn-primary" id="netbanking-complete-payment">Pay via Net Banking 🏦</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- COD Form -->
+      <div class="payment-form hidden" id="cod-form">
+        <h3>Cash on Delivery</h3>
+        <form class="cod-payment-form">
+          <div class="cod-info">
+            <div class="cod-details">
+              <p>📦 <strong>Delivery Information:</strong></p>
+              <ul>
+                <li>Pay cash when your order is delivered</li>
+                <li>Delivery within 3-5 business days</li>
+                <li>Our delivery partner will collect the payment</li>
+                <li>Please keep exact change ready</li>
+              </ul>
+            </div>
+            
+            <div class="form-row">
+              <label for="cod-phone">Contact Number</label>
+              <input type="tel" id="cod-phone" placeholder="Enter your mobile number" maxlength="10" required>
+            </div>
+            
+            <div class="form-row">
+              <label for="cod-address">Delivery Address</label>
+              <textarea id="cod-address" placeholder="Enter complete delivery address with landmarks" required></textarea>
+            </div>
+          </div>
+
+          <div class="payment-summary">
+            <div class="summary-row">
+              <span>Subtotal:</span>
+              <span id="cod-subtotal">₹0</span>
+            </div>
+            <div class="summary-row">
+              <span>Shipping:</span>
+              <span>₹99</span>
+            </div>
+            <div class="summary-row">
+              <span>COD Charges:</span>
+              <span>₹40</span>
+            </div>
+            <div class="summary-row">
+              <span>Tax (18%):</span>
+              <span id="cod-tax">₹0</span>
+            </div>
+            <div class="summary-row total">
+              <span>Total Amount:</span>
+              <span id="cod-final-total">₹0</span>
+            </div>
+          </div>
+
+          <div class="payment-actions">
+            <button type="button" class="btn-secondary" id="cod-back-to-cart">← Back to Cart</button>
+            <button type="submit" class="btn-primary" id="cod-complete-payment">Confirm COD Order 🚚</button>
+          </div>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p>&copy; 2025 TechStore. Secure Shopping Experience.</p>
+  </footer>
+  
+  <script src="utils.js"></script>
+  <script src="api.js"></script>
+  <script src="categoryDetector.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>

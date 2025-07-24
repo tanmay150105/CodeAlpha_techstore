@@ -1,0 +1,6 @@
+[submodule "libs"]
+	path = libs
+	url = https://github.com/tanmay150105/global_libs.git
+[submodule "shared-utils"]
+	path = shared-utils
+	url = https://github.com/tanmay150105/global_shared-utils.git

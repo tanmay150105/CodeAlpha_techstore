@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="200" height="150" viewBox="0 0 200 150">
+    <rect width="200" height="150" fill="#1e1e1e"/>
+    <circle cx="100" cy="75" r="50" fill="#569cd6" stroke="#4a86c7" stroke-width="3"/>
+    <circle cx="100" cy="75" r="35" fill="#4a86c7" stroke="#569cd6" stroke-width="2"/>
+    <circle cx="100" cy="75" r="20" fill="#569cd6" stroke="#ffffff" stroke-width="1"/>
+    <path d="M 100 55 L 105 65 L 95 65 Z" fill="#ffffff"/>
+    <path d="M 115 75 L 125 70 L 125 80 Z" fill="#ffffff"/>
+    <path d="M 100 95 L 95 85 L 105 85 Z" fill="#ffffff"/>
+    <path d="M 85 75 L 75 80 L 75 70 Z" fill="#ffffff"/>
+    <text x="100" y="140" text-anchor="middle" fill="white" font-size="12" font-family="Arial">COOLER</text>
+</svg>

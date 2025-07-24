@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="TechStore - Your one-stop shop for premium computer components">
+  <meta name="author" content="TechStore Development Team">
+  <meta name="keywords" content="tech store, computer components, CPU, GPU, memory, cooling, peripherals, online shopping">
+  <meta name="robots" content="index, follow">
+  <meta property="og:title" content="TechStore | Premium Tech Components">
+  <meta property="og:description" content="Shop premium computer components with fast delivery and secure checkout">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://yourdomain.com/">
+  <meta property="og:image" content="https://yourdomain.com/favicon.png">
+  <link rel="canonical" href="https://yourdomain.com/index.html">
+  <link rel="icon" href="favicon.ico" type="image/x-icon">
+  <title>TechStore | Premium Tech Components</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header>
+    <h1>🔧 TechStore</h1>
+    <nav class="navbar">
+      <ul>
+        <li><a href="index.html">Home</a></li>
+        <li><a href="products.html">Products</a></li>
+        <li><a href="cart.html">Cart 🛒</a></li>
+      </ul>
+    </nav>
+    <!-- User Info Display -->
+    <div id="header-user-info" class="header-user-info hidden">
+      <span>👤 <span id="header-user-name"></span></span>
+      <button id="header-logout" class="btn-mini">Logout</button>
+    </div>
+  </header>
+
+  <main>
+    <!-- Welcome Header -->
+    <section class="welcome-header">
+      <h2>🔐 Welcome to TechStore</h2>
+      <p>Please login to access our premium computer components store</p>
+    </section>
+
+    <!-- Login Section -->
+<section class="login-box" id="login-section">
+  <h3>Login to Your Account</h3>
+  <form id="loginForm">
+    <label for="name">Full Name:</label>
+    <input type="text" id="name" name="name" placeholder="Enter your full name" required />
+
+    <label for="email">Email:</label>
+    <input type="email" id="email" name="email" placeholder="Enter your email" autocomplete="username" required />
+
+    <label for="password">Password:</label>
+    <input type="password" id="password" name="password" placeholder="Enter password" autocomplete="current-password" required />
+
+    <button type="submit">Login</button>
+  </form>
+</section>
+
+<!-- User Details Section (hidden initially) -->
+<section class="user-details hidden" id="user-details">
+  <h3>👤 Welcome Back!</h3>
+  <div class="user-info">
+    <p><strong>Name:</strong> <span id="user-name"></span></p>
+    <p><strong>Email:</strong> <span id="user-email"></span></p>
+    <p><strong>Login Time:</strong> <span id="login-time"></span></p>
+    <p><strong>Account Status:</strong> <span class="status-active">Active</span></p>
+    <button id="logout-btn" class="btn-secondary">Logout</button>
+  </div>
+</section>
+
+<!-- Payment History Section (hidden initially) -->
+<section class="payment-history hidden" id="payment-history">
+  <h3>📋 Your Order History</h3>
+  <div class="history-controls">
+    <button id="clear-history" class="btn-danger">Clear History</button>
+    <span class="history-count">Total Orders: <span id="order-count">0</span></span>
+  </div>
+  
+  <div class="history-container" id="history-container">
+    <p class="no-orders">No orders found. Start shopping to see your order history! 🛒</p>
+  </div>
+</section>    
+<!-- Hero section (shown after login) -->
+<section class="hero hidden" id="hero-section">
+      <h2>🎉 Welcome to TechStore!</h2>
+      <p>Explore 35+ premium components across 5 categories - CPUs, GPUs, Memory, Power & Cooling, Peripherals!</p>
+      <div class="shopping-action">
+        <a href="products.html" class="btn shop-btn">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M7 18c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12L8.1 13h7.45c.75 0 1.41-.42 1.75-1.03L21.7 4H5.21l-.94-2H1zm16 16c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
+          </svg>
+          Start Shopping
+        </a>
+        <p class="shop-description">Browse our complete catalog of computer components</p>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p>&copy; 2025 TechStore. Engineered for Excellence.</p>
+  </footer>
+  
+  <script src="utils.js"></script>
+  <script src="api.js"></script>
+  <script src="categoryDetector.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Browse premium computer components - CPUs, GPUs, Memory, Cooling & Peripherals">
+  <meta name="keywords" content="computer components, CPU, GPU, memory, cooling, peripherals, tech store">
+  <meta name="robots" content="index, follow">
+  <meta property="og:title" content="TechStore | Premium Computer Components">
+  <meta property="og:description" content="Shop the latest computer components with fast delivery">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://yourdomain.com/products.html">
+  <meta property="og:image" content="https://yourdomain.com/favicon.png">
+  <link rel="canonical" href="https://yourdomain.com/products.html">
+  <link rel="icon" href="favicon.ico" type="image/x-icon">
+  <title>TechStore | Computer Components</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header>
+    <h1>🔧 TechStore - Products</h1>
+    <nav class="navbar">
+      <ul>
+        <li><a href="index.html">Home</a></li>
+        <li><a href="products.html">Products</a></li>
+        <li><a href="cart.html">Cart 🛒</a></li>
+      </ul>
+    </nav>
+    <!-- User Info Display -->
+    <div id="header-user-info" class="header-user-info hidden">
+      <span>👤 <span id="header-user-name"></span></span>
+      <button id="header-logout" class="btn-mini">Logout</button>
+    </div>
+  </header>
+
+  <main>
+    <!-- Category Filter -->
+    <section class="category-filter">
+      <h2>Browse by Category</h2>
+      <div class="filter-buttons">
+        <button class="filter-btn active" data-category="all">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/>
+          </svg>
+          All Products
+        </button>
+        <button class="filter-btn" data-category="processors">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M17 3H7c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H7V5h10v14z"/>
+          </svg>
+          Processors
+        </button>
+        <button class="filter-btn" data-category="graphics">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M21 3H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H3V5h18v14z"/>
+          </svg>
+          Graphics Cards
+        </button>
+        <button class="filter-btn" data-category="memory">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M15 9H9v6h6V9zm-2 4h-2v-2h2v2zm8-2V9h-2V7c0-1.1-.9-2-2-2H7c-1.1 0-2 .9-2 2v2H3v2h2v2H3v2h2v2c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2v-2h2v-2h-2v-2h2z"/>
+          </svg>
+          Memory
+        </button>
+        <button class="filter-btn" data-category="cooling">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+          </svg>
+          Cooling
+        </button>
+        <button class="filter-btn" data-category="peripherals">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M20 3H4c-1.1 0-2 .9-2 2v11c0 1.1.9 2 2 2h3l-1 1v2h12v-2l-1-1h3c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 13H4V5h16v11z"/>
+          </svg>
+          Peripherals
+        </button>
+      </div>
+    </section>
+
+    <!-- Products Grid -->
+    <section class="products-section">
+      <h2>Available Products</h2>
+      <div class="product-grid" id="products-grid">
+        <!-- Products will be loaded here by JavaScript -->
+        <div class="loading-message">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" class="animate-spin">
+            <path d="M12 4V2A10 10 0 0 0 2 12h2a8 8 0 0 1 8-8z"/>
+          </svg>
+          Loading products...
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p>&copy; 2025 TechStore. Premium Components, Expert Service.</p>
+  </footer>
+  
+  <script src="utils.js"></script>
+  <script src="api.js"></script>
+  <script src="categoryDetector.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>

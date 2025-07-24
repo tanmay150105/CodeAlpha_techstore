@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="200" height="150" viewBox="0 0 200 150">
+    <rect width="200" height="150" fill="#1e1e1e"/>
+    <rect x="30" y="40" width="140" height="70" fill="#569cd6" stroke="#4a86c7" stroke-width="2" rx="5"/>
+    <rect x="40" y="50" width="120" height="50" fill="#2d2d30" stroke="#4a86c7" stroke-width="1"/>
+    <circle cx="60" cy="65" r="4" fill="#ffffff"/>
+    <circle cx="80" cy="65" r="4" fill="#ffffff"/>
+    <circle cx="100" cy="65" r="4" fill="#ffffff"/>
+    <circle cx="120" cy="65" r="4" fill="#ffffff"/>
+    <circle cx="140" cy="65" r="4" fill="#ffffff"/>
+    <circle cx="60" cy="85" r="4" fill="#ffffff"/>
+    <circle cx="80" cy="85" r="4" fill="#ffffff"/>
+    <circle cx="100" cy="85" r="4" fill="#ffffff"/>
+    <circle cx="120" cy="85" r="4" fill="#ffffff"/>
+    <circle cx="140" cy="85" r="4" fill="#ffffff"/>
+    <text x="100" y="135" text-anchor="middle" fill="white" font-size="12" font-family="Arial">DEVICE</text>
+</svg>

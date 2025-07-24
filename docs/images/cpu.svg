@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="200" height="150" viewBox="0 0 200 150">
+    <rect width="200" height="150" fill="#1e1e1e"/>
+    <rect x="40" y="30" width="120" height="90" fill="#569cd6" stroke="#4a86c7" stroke-width="2" rx="5"/>
+    <rect x="60" y="50" width="80" height="50" fill="#4a86c7" stroke="#569cd6" stroke-width="1" rx="3"/>
+    <circle cx="70" cy="65" r="3" fill="#ffffff"/>
+    <circle cx="85" cy="65" r="3" fill="#ffffff"/>
+    <circle cx="100" cy="65" r="3" fill="#ffffff"/>
+    <circle cx="115" cy="65" r="3" fill="#ffffff"/>
+    <circle cx="130" cy="65" r="3" fill="#ffffff"/>
+    <circle cx="70" cy="80" r="3" fill="#ffffff"/>
+    <circle cx="85" cy="80" r="3" fill="#ffffff"/>
+    <circle cx="100" cy="80" r="3" fill="#ffffff"/>
+    <circle cx="115" cy="80" r="3" fill="#ffffff"/>
+    <circle cx="130" cy="80" r="3" fill="#ffffff"/>
+    <text x="100" y="115" text-anchor="middle" fill="white" font-size="12" font-family="Arial">CPU</text>
+</svg>
