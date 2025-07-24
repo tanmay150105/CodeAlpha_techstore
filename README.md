@@ -52,47 +52,11 @@ techstore/
 ```
 
 ## Setup
-
-### Prerequisites
-- Node.js 18+ 
-- MySQL 8.0+
-- PNPM 8.0+
-
-### Installation
-1. Clone repository with submodules:
-```bash
-git clone --recurse-submodules https://github.com/tanmay150105/CodeAlpha_techstore.git
-cd CodeAlpha_techstore
-```
-
-2. Install dependencies:
-```bash
-pnpm install
-```
-
-3. Set up MySQL database:
-```bash
-# Create database and import schema
-mysql -u root -p < database-setup.sql
-```
-
-4. Configure environment:
-```bash
-# Copy environment template
-cp backend/.env.example backend/.env
-# Edit backend/.env with your database credentials
-```
-
-5. Start the application:
-```bash
-# Development mode
-pnpm dev
-
-# Production mode  
-pnpm start
-```
-
-The application will be available at `http://localhost:5000`
+1. Clone repository
+2. Install dependencies: `npm install`
+3. Set up MySQL database
+4. Copy `.env.example` to `.env` and update values
+5. Start server: `npm start`
 
 ## Environment Variables
 Copy `.env.example` to `.env` and update:

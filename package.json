@@ -9,7 +9,7 @@
     "dev": "nodemon backend/server.mysql.js",
     "install": "pnpm install",
     "setup": "pnpm install && node database-setup.js",
-    "db:setup": "mysql -u root -p < database-setup.sql"
+    "db:setup": "mysql -u root -padmin < database-setup.sql"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
