@@ -235,51 +235,19 @@ function createTopRightLogoutPanel() {
     // Remove existing panel if any
     const existingPanel = document.getElementById('top-right-logout');
     if (existingPanel) existingPanel.remove();
-    
+
     const loginData = JSON.parse(localStorage.getItem('techstore_user_login') || '{}');
-    
-    // Only show logout panel if user is logged in
     if (!loginData.isLoggedIn) return;
-    
+
     const logoutPanel = document.createElement('div');
     logoutPanel.id = 'top-right-logout';
-    logoutPanel.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        background: rgba(30, 30, 30, 0.95);
-        border: 1px solid rgba(86, 156, 214, 0.3);
-        border-radius: 8px;
-        padding: 12px 16px;
-        z-index: 1000;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-        color: #ffffff;
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        backdrop-filter: blur(8px);
-        font-size: 14px;
-        display: flex;
-        align-items: center;
-        gap: 12px;
-    `;
-    
+    logoutPanel.className = 'button-group-panel'; // Use a custom class for styling
+
     logoutPanel.innerHTML = `
-        <span style="color: #cccccc; font-weight: 500;">${loginData.name}</span>
-        <button onclick="handleTopRightLogout()" style="
-            background: linear-gradient(135deg, #d73a49, #c82333);
-            color: white;
-            border: none;
-            padding: 8px 12px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: 500;
-            font-size: 13px;
-            transition: all 0.2s ease;
-        " onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 8px rgba(215, 58, 73, 0.4)'" 
-           onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'">
-            Logout
-        </button>
+        <button class="btn-done">done</button>
+        <button class="btn-logout" onclick="handleTopRightLogout()">Logout</button>
     `;
-    
+
     document.body.appendChild(logoutPanel);
 }
 
