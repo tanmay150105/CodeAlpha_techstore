@@ -60,7 +60,57 @@ nav a {
   color: white;
   text-decoration: none;
 }
+/* Button group panel styling */
+.button-group-panel {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    display: flex;
+    gap: 0;
+    border: 2px solid #23456e; /* subtle blue border */
+    border-radius: 8px;
+    background: none;
+    padding: 0;
+    z-index: 1000;
+    overflow: hidden;
+}
 
+/* "done" button (dark style) */
+.btn-done {
+    background: #222;
+    color: #eee;
+    border: none;
+    padding: 8px 16px;
+    font-weight: 500;
+    font-family: inherit;
+    border-radius: 0;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+/* "Logout" button (red style) */
+.btn-logout {
+    background: #d73a49;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    font-weight: 600;
+    font-family: inherit;
+    border-radius: 0;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.btn-logout:hover {
+    background: #c82333;
+}
+
+/* Remove focus outlines for aesthetics */
+.button-group-panel button:focus {
+    outline: none;
+    box-shadow: none;
+}
 /* Navigation styles */
 .navbar nav ul li a {
     color: white;
