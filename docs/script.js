@@ -241,10 +241,10 @@ function createTopRightLogoutPanel() {
 
     const logoutPanel = document.createElement('div');
     logoutPanel.id = 'top-right-logout';
-    logoutPanel.className = 'button-group-panel'; // Use a custom class for styling
+    logoutPanel.className = 'button-group-panel';
 
     logoutPanel.innerHTML = `
-        <button class="btn-done">done</button>
+        <button class="btn-done"><span style="margin-right:6px;">👤</span>done</button>
         <button class="btn-logout" onclick="handleTopRightLogout()">Logout</button>
     `;
 
