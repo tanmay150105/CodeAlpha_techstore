@@ -1,16 +1,33 @@
 const { DataTypes } = require('sequelize');
 const { sequelize } = require('../config/database');
 
-// OrderItem model definition
 const OrderItem = sequelize.define('OrderItem', {
-  name: {
-    type: DataTypes.STRING,
+  id: {
+    type: DataTypes.INTEGER,
+    autoIncrement: true,
+    primaryKey: true,
+  },
+  order_id: {
+    type: DataTypes.INTEGER,
     allowNull: false,
+    references: {
+      model: 'orders',
+      key: 'id',
+    },
+    onDelete: 'CASCADE',
+  },
+  product_id: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: 'products',
+      key: 'id',
+    },
+    onDelete: 'CASCADE',
   },
   quantity: {
     type: DataTypes.INTEGER,
     allowNull: false,
-    defaultValue: 1,
     validate: {
       min: 1,
     },
@@ -19,28 +36,11 @@ const OrderItem = sequelize.define('OrderItem', {
     type: DataTypes.DECIMAL(10, 2),
     allowNull: false,
   },
-  image: {
-    type: DataTypes.STRING,
-    allowNull: false,
-  },
-  productId: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-    references: {
-      model: 'Products',
-      key: 'id',
-    },
-  },
-  orderId: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-    references: {
-      model: 'Orders',
-      key: 'id',
-    },
-  },
 }, {
+  tableName: 'order_items',
   timestamps: true,
+  createdAt: 'created_at',
+  updatedAt: false, // not present in SQL
 });
 
 module.exports = OrderItem;
