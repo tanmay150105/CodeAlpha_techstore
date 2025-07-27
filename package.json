@@ -1,5 +1,6 @@
 {
   "name": "codealpha-techstore",
+  "private": true,
   "version": "1.0.0",
   "description": "Modern e-commerce platform for computer components - CodeAlpha Project",
   "main": "backend/server.mysql.js",
@@ -7,7 +8,6 @@
   "scripts": {
     "start": "node backend/server.mysql.js",
     "dev": "nodemon backend/server.mysql.js",
-    "install": "pnpm install",
     "setup": "pnpm install && node database-setup.js",
     "db:setup": "mysql -u root -padmin < database-setup.sql"
   },
