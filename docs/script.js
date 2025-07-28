@@ -1848,8 +1848,8 @@ function displayProducts(products) {
     productsGrid.innerHTML = products.map(product => `
         <div class="product-card" data-category="${product.category}">
             <div class="product-image">
-                ${product.image && product.image.trim() !== '' ? 
-                    `<img src="${product.image}" alt="${product.name}" width="200" height="150" onerror="handleImageError(this)">` : 
+                ${product.image_url && product.image_url.trim() !== '' ? 
+                    `<img src="${product.image_url}" alt="${product.name}" width="200" height="150" onerror="handleImageError(this)">` : 
                     `<img src="./images/generic.svg" alt="${product.name}" width="200" height="150" onerror="handleImageError(this)">`
                 }
             </div>
