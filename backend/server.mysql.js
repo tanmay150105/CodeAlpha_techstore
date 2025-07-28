@@ -9,6 +9,7 @@ const { syncDatabase } = require('./models/index');
 const userRoutes = require('./routes/userRoutes');
 const productRoutes = require('./routes/productRoutes');
 const orderRoutes = require('./routes/orderRoutes');
+const trackingRoutes = require('./routes/tracking');
 
 // Load environment variables
 dotenv.config();
@@ -46,6 +47,7 @@ app.get('/api/health', async (req, res) => {
 app.use('/api/users', userRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);
+app.use('/api/tracking', trackingRoutes);
 
 // Root API route
 app.get('/api', (req, res) => {

@@ -8,8 +8,8 @@
   "scripts": {
     "start": "node backend/server.mysql.js",
     "dev": "nodemon backend/server.mysql.js",
-    "setup": "pnpm install && node database-setup.js",
-    "db:setup": "mysql -u root -padmin < database-setup.sql"
+    "setup": "pnpm install",
+    "db:setup": "mysql -u root -p < database-setup.sql"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

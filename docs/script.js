@@ -1672,6 +1672,13 @@ function addToCart(productCard) {
     // Save cart
     SafeStorage.setItem('techstore_cart', JSON.stringify(cartItems));
     
+    // Track add to cart action
+    if (window.userTracker) {
+        // Extract product ID from card if available
+        const productId = productCard.dataset.productId || cartItem.id;
+        window.userTracker.trackAddToCart(productId, 1);
+    }
+    
     // Show success message
     const toast = new ToastNotification();
     toast.show(`${name} added to cart! 🛒`, 'success', 2000);
@@ -1846,7 +1853,7 @@ function displayProducts(products) {
     if (!productsGrid) return;
 
     productsGrid.innerHTML = products.map(product => `
-        <div class="product-card" data-category="${product.category}">
+        <div class="product-card" data-category="${product.category}" data-product-id="${product.id}">
             <div class="product-image">
                 ${product.image_url && product.image_url.trim() !== '' ? 
                     `<img src="${product.image_url}" alt="${product.name}" width="200" height="150" onerror="handleImageError(this)">` : 
@@ -1857,7 +1864,7 @@ function displayProducts(products) {
                 <h4>${product.name}</h4>
                 <p class="product-description">${product.description}</p>
                 <p class="product-price">₹${product.price}</p>
-                <button class="btn add-to-cart-btn" data-name="${product.name}" data-price="${product.price}" data-id="${product.id}">
+                <button class="btn add-to-cart-btn" data-name="${product.name}" data-price="${product.price}" data-id="${product.id}" data-product-id="${product.id}">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M7 18c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12L8.1 13h7.45c.75 0 1.41-.42 1.75-1.03L21.7 4H5.21l-.94-2H1zm16 16c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
                     </svg>

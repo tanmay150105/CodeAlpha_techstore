@@ -119,6 +119,11 @@ function proceedToCheckout() {
         return;
     }
 
+    // Track checkout start
+    if (window.userTracker) {
+        window.userTracker.trackCheckoutStart(cart);
+    }
+
     // Hide cart section and show payment section
     const cartSection = document.querySelector('.cart-items');
     const checkoutSection = document.querySelector('.checkout');
@@ -254,6 +259,11 @@ function showPaymentSuccess(paymentMethod) {
         paymentMethod: paymentMethod,
         date: new Date().toISOString()
     };
+
+    // Track order completion
+    if (window.userTracker) {
+        window.userTracker.trackOrderComplete(orderId, orderTotal, paymentMethod);
+    }
 
     // Save order to localStorage (in real app, this would go to backend)
     const orders = JSON.parse(localStorage.getItem('orders') || '[]');
