@@ -19,10 +19,30 @@ Product.hasMany(OrderItem, { foreignKey: 'product_id', as: 'order_items' });
 OrderItem.belongsTo(Product, { foreignKey: 'product_id', as: 'product' });
 
 // Function to sync all models with the database
-const syncDatabase = async (force = false) => {
+const syncDatabase = async () => {
   try {
-    await sequelize.sync({ force });
-    console.log('✅ Database synced successfully');
+    await sequelize.authenticate();
+    console.log('✅ Database connection successful');
+
+    const queryInterface = sequelize.getQueryInterface();
+    const existingTables = await queryInterface.showAllTables();
+
+    const models = [
+      { name: 'User', model: User },
+      { name: 'Product', model: Product },
+      { name: 'Order', model: Order },
+      { name: 'OrderItem', model: OrderItem },
+    ];
+
+    for (const { name, model } of models) {
+      const tableName = model.getTableName();
+      if (existingTables.includes(tableName)) {
+        console.log(`✔ Table "${tableName}" already exists`);
+      } else {
+        await model.sync(); // create only if not exists
+        console.log(`✅ Table "${tableName}" created`);
+      }
+    }
   } catch (error) {
     console.error('❌ Error syncing database:', error);
     throw error;
