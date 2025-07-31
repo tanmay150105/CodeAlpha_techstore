@@ -134,16 +134,41 @@ CREATE TABLE IF NOT EXISTS order_items (
 
 -- Insert sample products
 INSERT IGNORE INTO products (name, description, price, category, brand, stock_quantity, image_url) VALUES
-('Intel Core i7-13700K', 'High-performance desktop processor with 16 cores', 399.99, 'processors', 'Intel', 50, '/images/cpu.svg'),
-('AMD Ryzen 7 7700X', 'Advanced desktop processor with 8 cores', 349.99, 'processors', 'AMD', 45, '/images/cpu.svg'),
-('NVIDIA GeForce RTX 4070', 'High-end graphics card for gaming and content creation', 599.99, 'graphics', 'NVIDIA', 30, '/images/gpu.svg'),
-('AMD Radeon RX 7600', 'Mid-range graphics card with excellent performance', 269.99, 'graphics', 'AMD', 25, '/images/gpu.svg'),
-('Corsair Vengeance LPX 32GB DDR4', 'High-speed memory kit for gaming and productivity', 129.99, 'memory', 'Corsair', 60, '/images/ram.svg'),
-('Kingston Fury Beast 16GB DDR4', 'Reliable memory solution for mainstream systems', 59.99, 'memory', 'Kingston', 80, '/images/ram.svg'),
-('Noctua NH-D15', 'Premium CPU cooler with dual fan design', 99.99, 'cooling', 'Noctua', 40, '/images/cooler.svg'),
-('Arctic Liquid Freezer II 280', 'All-in-one liquid CPU cooler', 79.99, 'cooling', 'Arctic', 35, '/images/cooler.svg'),
-('Logitech MX Master 3', 'Advanced wireless mouse for productivity', 99.99, 'peripherals', 'Logitech', 70, '/images/peripherals.svg'),
-('Razer BlackWidow V3', 'Mechanical gaming keyboard with RGB', 139.99, 'peripherals', 'Razer', 55, '/images/peripherals.svg');
+-- Processors
+('Intel Core i7-13700K', 'High-performance 16-core Raptor Lake processor', 38499.00, 'processors', 'Intel', 50, '/images/cpu.svg'),
+('AMD Ryzen 7 7700X', '8-core Zen 4 CPU for gamers and creators', 31499.00, 'processors', 'AMD', 45, '/images/cpu.svg'),
+('Intel Core i9-13900K', '24‑core flagship Raptor Lake processor', 43550.00, 'processors', 'Intel', 20, '/images/cpu.svg'),
+('Intel Core i7-14700K', '20‑core Raptor Lake Refresh CPU for demanding workloads', 38499.00, 'processors', 'Intel', 25, '/images/cpu.svg'),
+('AMD Ryzen 9 7900X', '12‑core Zen 4 CPU for gaming & content creation', 39999.00, 'processors', 'AMD', 18, '/images/cpu.svg'),
+
+-- Graphics
+('NVIDIA GeForce RTX 4070', 'Powerful GPU for 1440p gaming and creation', 57999.00, 'graphics', 'NVIDIA', 30, '/images/gpu.svg'),
+('AMD Radeon RX 7600', 'Budget 1080p GPU with solid performance', 24999.00, 'graphics', 'AMD', 25, '/images/gpu.svg'),
+('NVIDIA GeForce RTX 4080', 'Ultra-powerful GPU for 4K gaming', 115000.00, 'graphics', 'NVIDIA', 12, '/images/gpu.svg'),
+('NVIDIA GeForce RTX 4070 Super', 'Efficient 1440p GPU with DLSS 3.5 support', 85500.00, 'graphics', 'NVIDIA', 15, '/images/gpu.svg'),
+('AMD Radeon RX 7900 XTX', 'Flagship AMD GPU for high-end performance', 110000.00, 'graphics', 'AMD', 18, '/images/gpu.svg'),
+
+-- Memory
+('Corsair Vengeance LPX 32GB DDR4', 'Reliable high-speed DDR4 gaming memory', 4999.00, 'memory', 'Corsair', 60, '/images/ram.svg'),
+('Kingston Fury Beast 16GB DDR4', 'Mainstream DDR4 RAM for everyday performance', 2699.00, 'memory', 'Kingston', 80, '/images/ram.svg'),
+('Corsair Dominator Platinum RGB 16GB DDR4', 'Premium DDR4 RAM with RGB lighting', 8900.00, 'memory', 'Corsair', 50, '/images/ram.svg'),
+('Corsair Vengeance DDR5 32GB 6000MHz', 'High‑speed DDR5 kit for multitasking', 7299.00, 'memory', 'Corsair', 30, '/images/ram.svg'),
+('G.SKILL Trident Z5 32GB DDR5', 'Fast DDR5 memory with RGB lighting', 18500.00, 'memory', 'G.SKILL', 45, '/images/ram.svg'),
+
+-- Cooling
+('Noctua NH-D15', 'Dual-tower premium air CPU cooler', 9399.00, 'cooling', 'Noctua', 40, '/images/cooler.svg'),
+('Arctic Liquid Freezer II 280', 'Efficient AIO CPU liquid cooler', 7999.00, 'cooling', 'Arctic', 35, '/images/cooler.svg'),
+('be quiet! Dark Rock Pro 4', 'Silent and efficient dual‑tower air cooler', 18614.00, 'cooling', 'be quiet!', 30, '/images/cooler.svg'),
+('Cooler Master ML240L V2 ARGB', '240mm ARGB liquid CPU cooler', 5799.00, 'cooling', 'Cooler Master', 20, '/images/cooler.svg'),
+('DeepCool AK620', 'Dual‑tower air cooler for high performance', 6500.00, 'cooling', 'DeepCool', 40, '/images/cooler.svg'),
+
+-- Peripherals
+('Logitech MX Master 3', 'Advanced ergonomic wireless productivity mouse', 8999.00, 'peripherals', 'Logitech', 70, '/images/peripherals.svg'),
+('Razer BlackWidow V3', 'Mechanical gaming keyboard with RGB lighting', 9999.00, 'peripherals', 'Razer', 55, '/images/peripherals.svg'),
+('Logitech G502 X Lightspeed', 'Wireless gaming mouse with HERO sensor', 11795.00, 'peripherals', 'Logitech', 45, '/images/peripherals.svg'),
+('Logitech G Pro X Superlight 2', 'Ultra‑lightweight pro‑grade gaming mouse', 15499.00, 'peripherals', 'Logitech', 15, '/images/peripherals.svg'),
+('SteelSeries Arctis 7 Wireless', 'Premium headset with surround sound', 14999.00, 'peripherals', 'SteelSeries', 35, '/images/peripherals.svg');
+
 
 -- Create indexes for better performance
 CREATE INDEX idx_products_category ON products(category);

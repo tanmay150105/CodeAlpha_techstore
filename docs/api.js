@@ -6,19 +6,20 @@ const API_URL = window.location.hostname === 'localhost' ? 'http://localhost:500
 async function fetchAPI(endpoint, options = {}) {
     try {
         // Get auth token from localStorage if it exists
-        const userInfo = localStorage.getItem('techstore_user') ? 
-            JSON.parse(localStorage.getItem('techstore_user')) : null;
+        const token =  JSON.parse(localStorage.getItem('techstore_user'))?.token;
         
         // Set default headers
         const headers = {
             'Content-Type': 'application/json',
-            ...options.headers
+            ...(options.headers || {}),
+            ...(token && { Authorization: `Bearer ${token}` })
         };
         
+        /*
         // Add auth token to headers if available
         if (userInfo && userInfo.token) {
             headers['Authorization'] = `Bearer ${userInfo.token}`;
-        }
+        }*/
         
         // Make the request
         const response = await fetch(`${API_URL}${endpoint}`, {

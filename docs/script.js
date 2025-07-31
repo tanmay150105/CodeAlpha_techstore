@@ -1,3 +1,7 @@
+const userData = JSON.parse(localStorage.getItem('techstore_user'));
+const username = userData?.username || 'guest';
+const CART_KEY = `techstore_cart_${username}`;
+const ORDER_HISTORY_KEY = `techstore_order_history_${username}`;
 // Toast Notification System
 class ToastNotification {
     constructor() {
@@ -236,7 +240,7 @@ function createTopRightLogoutPanel() {
     const existingPanel = document.getElementById('top-right-logout');
     if (existingPanel) existingPanel.remove();
 
-    const loginData = JSON.parse(localStorage.getItem('techstore_user_login') || '{}');
+    const userData = JSON.parse(localStorage.getItem('techstore_user') || '{}');
     if (!loginData.isLoggedIn) return;
 
     const logoutPanel = document.createElement('div');
@@ -253,7 +257,7 @@ function createTopRightLogoutPanel() {
 
 // Enhanced top-right logout handler
 function handleTopRightLogout() {
-    const loginData = JSON.parse(localStorage.getItem('techstore_user_login') || '{}');
+    const userData = JSON.parse(localStorage.getItem('techstore_user') || '{}');
     const userName = loginData.name || 'User';
     
     // Confirm logout
@@ -317,7 +321,7 @@ function setupLoginForm() {
             
             // Create login data
             const loginTime = new Date().toLocaleString();
-            const loginData = {
+            const userData = {
                 name,
                 email,
                 loginTime,
@@ -325,7 +329,7 @@ function setupLoginForm() {
             };
             
             // Save login data
-            localStorage.setItem('techstore_user_login', JSON.stringify(loginData));
+            localStorage.setItem('techstore_user', JSON.stringify(loginData));
             
             // Show success message
             toast.show(`Welcome, ${name}! Login successful.`, 'success', 3000);
@@ -361,7 +365,7 @@ function setupLoginForm() {
 
 class TechStoreCart {
     constructor() {
-        this.cartItems = JSON.parse(localStorage.getItem('techstore_cart')) || [];
+        this.cartItems = JSON.parse(localStorage.getItem(CART_KEY)) || [];
         this.initialize();
     }
 
@@ -584,7 +588,7 @@ class TechStoreCart {
     }
 
     saveCartData() {
-        localStorage.setItem('techstore_cart', JSON.stringify(this.cartItems));
+        localStorage.setItem(CART_KEY, JSON.stringify(this.cartItems));
     }
 
     updateCartDisplay() {
@@ -924,8 +928,8 @@ class TechStoreCart {
         };
 
         // Get existing order history
-        const orderHistory = JSON.parse(localStorage.getItem('techstore_order_history') || '[]');
-        
+        const orderHistory = JSON.parse(localStorage.getItem(ORDER_HISTORY_KEY) || '[]');
+
         // Add new order to the beginning of the array
         orderHistory.unshift(order);
         
@@ -935,7 +939,7 @@ class TechStoreCart {
         }
         
         // Save updated history
-        localStorage.setItem('techstore_order_history', JSON.stringify(orderHistory));
+        localStorage.setItem(ORDER_HISTORY_KEY, JSON.stringify(orderHistory));
         
         // Return the order for receipt display
         return order;
@@ -1203,7 +1207,7 @@ function updateTopRightPanel(loginData) {
 
 // Function to check login status on page load
 function checkLoginStatus() {
-    const loginData = JSON.parse(localStorage.getItem('techstore_user_login') || '{}');
+    const userDataData = JSON.parse(localStorage.getItem('techstore_user') || '{}');
     
     if (loginData.isLoggedIn) {
         // Hide center login and show only top-right user info
@@ -1235,9 +1239,9 @@ function checkLoginStatus() {
 // Function to handle logout
 function handleLogout() {
     // Get user data before clearing
-    const loginData = JSON.parse(localStorage.getItem('techstore_user_login') || '{}');
-    const userName = loginData.name || 'User';
-    
+    const userData = JSON.parse(localStorage.getItem('techstore_user') || '{}');
+    const userName = userData.name || 'User';
+
     // Clear login data
     localStorage.removeItem('techstore_user_login');
     
@@ -1286,14 +1290,14 @@ function handleLogout() {
 
 // Function to display header user info on all pages (simplified - no logout button)
 function displayHeaderUserInfo() {
-    const loginData = JSON.parse(localStorage.getItem('techstore_user_login') || '{}');
+    const userData = JSON.parse(localStorage.getItem('techstore_user') || '{}');
     const headerUserInfo = document.getElementById('header-user-info');
     const headerUserName = document.getElementById('header-user-name');
 
-    if (loginData.isLoggedIn && headerUserInfo) {
+    if (userData.isLoggedIn && headerUserInfo) {
         headerUserInfo.classList.remove('hidden');
         if (headerUserName) {
-            headerUserName.textContent = loginData.name || 'User';
+            headerUserName.textContent = userData.name || 'User';
         }
         // Remove any logout button from header since we have top-right logout
         const headerLogout = document.getElementById('header-logout');
@@ -1357,12 +1361,12 @@ class PaymentHistory {
     }
 
     displayPaymentHistory() {
-        const loginData = JSON.parse(localStorage.getItem('techstore_user_login') || '{}');
+        const userDataData = JSON.parse(localStorage.getItem('techstore_user') || '{}');
         const historySection = document.querySelector('#payment-history');
-        
-        if (loginData.isLoggedIn && historySection) {
-            const orderHistory = JSON.parse(localStorage.getItem('techstore_order_history') || '[]');
-            
+
+        if (userDataData.isLoggedIn && historySection) {
+            const orderHistory = JSON.parse(localStorage.getItem(ORDER_HISTORY_KEY) || '[]');
+
             if (orderHistory.length > 0) {
                 historySection.classList.remove('hidden');
                 historySection.style.display = 'block'; // Ensure it's visible
@@ -1584,7 +1588,7 @@ function loadCartItems() {
     
     if (!cartContainer) return;
     
-    const cartData = SafeStorage.getItem('techstore_cart');
+    const cartData = localStorage.getItem(CART_KEY);
     
     if (!cartData) {
         cartContainer.innerHTML = '<p style="text-align: center; color: #569cd6; font-size: 1.2rem;">Your cart is empty. <a href="products.html">Start shopping!</a></p>';
@@ -1662,7 +1666,7 @@ function addToCart(productCard) {
     
     // Get existing cart
     let cartItems = [];
-    const existingCart = SafeStorage.getItem('techstore_cart');
+    const existingCart = localStorage.getItem(CART_KEY);
     
     if (existingCart) {
         try {
@@ -1686,7 +1690,7 @@ function addToCart(productCard) {
     }
     
     // Save cart
-    SafeStorage.setItem('techstore_cart', JSON.stringify(cartItems));
+    localStorage.setItem(CART_KEY, JSON.stringify(cartItems));
     
     // Track add to cart action
     if (window.userTracker) {
@@ -1701,7 +1705,7 @@ function addToCart(productCard) {
 }
 
 function updateQuantity(index, change) {
-    const cartData = SafeStorage.getItem('techstore_cart');
+    const cartData = localStorage.getItem(CART_KEY);
     if (!cartData) return;
     
     try {
@@ -1714,7 +1718,7 @@ function updateQuantity(index, change) {
                 cartItems.splice(index, 1);
             }
             
-            SafeStorage.setItem('techstore_cart', JSON.stringify(cartItems));
+            localStorage.setItem(CART_KEY, JSON.stringify(cartItems));
             loadCartItems();
         }
     } catch (e) {
@@ -1723,7 +1727,7 @@ function updateQuantity(index, change) {
 }
 
 function removeFromCart(index) {
-    const cartData = SafeStorage.getItem('techstore_cart');
+    const cartData = localStorage.getItem(CART_KEY);
     if (!cartData) return;
     
     try {
@@ -1733,7 +1737,7 @@ function removeFromCart(index) {
             const itemName = cartItems[index].name;
             cartItems.splice(index, 1);
             
-            SafeStorage.setItem('techstore_cart', JSON.stringify(cartItems));
+            localStorage.setItem(CART_KEY, JSON.stringify(cartItems));
             loadCartItems();
             
             const toast = new ToastNotification();
@@ -1745,7 +1749,7 @@ function removeFromCart(index) {
 }
 
 function showPaymentSection() {
-    const cartData = SafeStorage.getItem('techstore_cart');
+    const cartData = localStorage.getItem(CART_KEY);
     
     if (!cartData) {
         const toast = new ToastNotification();
@@ -1782,10 +1786,23 @@ function setupPaymentForm() {
         });
     }
 }
+function showMessage(message, type = 'success') {
+    const messageBox = document.getElementById('messageBox');
+    messageBox.textContent = message;
+    messageBox.style.display = 'block';
+    messageBox.style.backgroundColor = type === 'error' ? '#f8d7da' : '#d4edda';
+    messageBox.style.color = type === 'error' ? '#721c24' : '#155724';
+    messageBox.style.border = type === 'error' ? '1px solid #f5c6cb' : '1px solid #c3e6cb';
+
+    setTimeout(() => {
+        messageBox.style.display = 'none';
+    }, 3000);
+}
+
 
 // Proceed to Checkout: send cart data to backend
 async function proceedToCheckout() {
-    const cart = JSON.parse(localStorage.getItem('techstore_cart') || '[]');
+    const cart = JSON.parse(localStorage.getItem(CART_KEY) || '[]');
     if (cart.length === 0) {
         alert('Your cart is empty!');
         return;
@@ -1807,10 +1824,19 @@ async function proceedToCheckout() {
         alert('Order placed successfully!');
         localStorage.removeItem('techstore_cart');
         // Optionally redirect or update UI
-    } catch (error) {
-        alert('Error placing order. Please try again.');
+    } 
+    catch (error) {
+    if (
+        error.message.includes('Failed to fetch') || 
+        error.message.includes('NetworkError') || 
+        error.message.includes('500') || 
+        !navigator.onLine
+    ) {
+        showMessage('Unable to connect to server. Please try again later.', 'error');
+    } else {
+        console.error('Checkout error:', error);
     }
-}
+}}
 
 // Attach to checkout button if it exists
 const checkoutBtn = document.getElementById('checkout-btn');
@@ -1896,14 +1922,14 @@ function displayProducts(products) {
             const id = this.dataset.id;
             const name = this.dataset.name;
             const price = this.dataset.price;
-            let cart = JSON.parse(localStorage.getItem('techstore_cart') || '[]');
+            let cart = JSON.parse(localStorage.getItem(CART_KEY) || '[]');
             const existing = cart.find(item => item.id === id);
             if (existing) {
                 existing.quantity += 1;
             } else {
                 cart.push({ id, name, price, quantity: 1 });
             }
-            localStorage.setItem('techstore_cart', JSON.stringify(cart));
+            localStorage.setItem(CART_KEY, JSON.stringify(cart));
             toast.show(`${name} added to cart! 🛒`, 'success', 2000);
         });
     });
@@ -1918,7 +1944,7 @@ function displayProducts(products) {
 function renderCartOnCheckout() {
     const cartContainer = document.getElementById('cart-items');
     if (!cartContainer) return;
-    const cart = JSON.parse(localStorage.getItem('techstore_cart') || '[]');
+    const cart = JSON.parse(localStorage.getItem(CART_KEY) || '[]');
     if (cart.length === 0) {
         cartContainer.innerHTML = '<p>Your cart is empty.</p>';
         return;

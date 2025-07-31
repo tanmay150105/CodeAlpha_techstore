@@ -17,6 +17,7 @@
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
+  <div id="messageBox" style="display:none; padding:10px; margin:10px; border-radius:5px;"></div>
   <header>
     <h1>🛍️ TechStore Cart</h1>
     <nav class="navbar">
@@ -294,19 +295,5 @@
   <script src="script.js"></script>
   <script src="cart.js"></script>
   <script src="user-tracking.js"></script>
-  <script>
-    // Check for logged in user
-    document.addEventListener('DOMContentLoaded', function() {
-        const headerUserName = document.getElementById('header-user-name');
-        const headerUserInfo = document.getElementById('header-user-info');
-        
-        const userData = JSON.parse(localStorage.getItem('techstore_user'));
-        
-        if (userData && headerUserName && headerUserInfo) {
-            headerUserName.textContent = userData.username;
-            headerUserInfo.classList.remove('hidden');
-        }
-    });
-</script>
 </body>
 </html>

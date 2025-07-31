@@ -1,5 +1,8 @@
+(() => {
 // cart.js - Updated with proper payment handling
-let cart = JSON.parse(localStorage.getItem('techstore_cart')) || [];
+const userData = JSON.parse(localStorage.getItem('techstore_user'));
+const username = userData?.username || 'guest';
+let cart = [];
 
 // Load cart on page load
 document.addEventListener('DOMContentLoaded', function() {
@@ -29,6 +32,8 @@ function setupEventListeners() {
 }
 
 function loadCartItems() {
+    cart = JSON.parse(localStorage.getItem(`techstore_cart_${username}`)) || [];
+    console.log('loadCartItems called, cart =', cart);
     const cartContainer = document.getElementById('cart-products');
     if (!cartContainer) return;
 
@@ -49,13 +54,15 @@ function loadCartItems() {
                     <button class="quantity-btn plus" data-id="${item.id}">+</button>
                 </div>
             </div>
-            <button class="remove-btn" onclick="removeFromCart(${item.id})">Remove</button>
+            <button class="remove-btn" data-id="${item.id}">Remove</button>
         </div>
     `).join('');
+    console.log("Cart UI rendered. Items:", cart.length);
 
     // Add event listeners for all buttons
     cartContainer.querySelectorAll('.quantity-btn').forEach(btn => {
         btn.addEventListener('click', () => {
+            console.log("button clicked:", btn);
             const id = parseInt(btn.dataset.id);
             const item = cart.find(item => item.id === id);
             if (item) {
@@ -70,6 +77,7 @@ function loadCartItems() {
 
     cartContainer.querySelectorAll('.remove-btn').forEach(btn => {
         btn.addEventListener('click', () => {
+            console.log("button clicked:", btn);
             const id = parseInt(btn.dataset.id);
             removeFromCart(id);
         });
@@ -77,6 +85,7 @@ function loadCartItems() {
 }
 
 function updateQuantity(productId, newQuantity) {
+    console.log("Updating quantity:", productId, "->", newQuantity);
     if (newQuantity <= 0) {
         removeFromCart(productId);
         return;
@@ -85,15 +94,16 @@ function updateQuantity(productId, newQuantity) {
     const item = cart.find(item => item.id === productId);
     if (item) {
         item.quantity = newQuantity;
-        localStorage.setItem('techstore_cart', JSON.stringify(cart));
+        localStorage.setItem(`techstore_cart_${username}`, JSON.stringify(cart));
         loadCartItems();
         updateCartTotal();
     }
 }
 
 function removeFromCart(productId) {
+    console.log("Removing product from cart:", productId);
     cart = cart.filter(item => item.id !== productId);
-    localStorage.setItem('techstore_cart', JSON.stringify(cart));
+    localStorage.setItem(`techstore_cart_${username}`, JSON.stringify(cart));
     loadCartItems();
     updateCartTotal();
 }
@@ -301,3 +311,4 @@ function showPaymentSuccess(paymentMethod) {
 // Export functions for global access
 window.updateQuantity = updateQuantity;
 window.removeFromCart = removeFromCart;
+})();
