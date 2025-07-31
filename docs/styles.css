@@ -1842,3 +1842,12 @@ footer p {
 .error-message {
   color: #f44747;
 }
+/* Smooth transitions for checkout process */
+.cart-items,
+#payment-section {
+    transition: opacity 0.3s ease-in-out;
+}
+
+#payment-section {
+    opacity: 1;
+}

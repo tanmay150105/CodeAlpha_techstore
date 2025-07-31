@@ -244,7 +244,7 @@ function createTopRightLogoutPanel() {
     logoutPanel.className = 'button-group-panel';
 
     logoutPanel.innerHTML = `
-        <button class="btn-done"><span style="margin-right:6px;">👤</span>done</button>
+        <button class="btn-done"><span style="margin-right:6px;">👤</span>${loginData.name}</button>
         <button class="btn-logout" onclick="handleTopRightLogout()">Logout</button>
     `;
 
@@ -330,11 +330,27 @@ function setupLoginForm() {
             // Show success message
             toast.show(`Welcome, ${name}! Login successful.`, 'success', 3000);
             
-            // Display user details (this will hide center login and show top-right user info)
-            displayUserDetails(loginData, true);
+            // Update header with actual username
+            const headerUserName = document.getElementById('header-user-name');
+            if (headerUserName) {
+                headerUserName.textContent = name;
+            }
             
-            // Update header (without logout button) and create top-right logout panel
-            displayHeaderUserInfo();
+            // Hide login form and show user section
+            const loginSection = document.getElementById('login-section');
+            if (loginSection) {
+                loginSection.classList.add('hidden');
+                loginSection.style.display = 'none';
+            }
+            
+            // Show hero section
+            const heroSection = document.getElementById('hero-section');
+            if (heroSection) {
+                heroSection.classList.remove('hidden');
+                heroSection.style.display = 'block';
+            }
+
+            // Create top-right logout panel with actual username
             createTopRightLogoutPanel();
         });
     }

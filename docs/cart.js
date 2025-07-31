@@ -44,14 +44,36 @@ function loadCartItems() {
                 <h3>${item.name}</h3>
                 <p class="price">₹${item.price.toLocaleString()}</p>
                 <div class="quantity-controls">
-                    <button onclick="updateQuantity(${item.id}, ${item.quantity - 1})">-</button>
+                    <button class="quantity-btn minus" data-id="${item.id}">-</button>
                     <span class="quantity">Qty: ${item.quantity}</span>
-                    <button onclick="updateQuantity(${item.id}, ${item.quantity + 1})">+</button>
+                    <button class="quantity-btn plus" data-id="${item.id}">+</button>
                 </div>
             </div>
             <button class="remove-btn" onclick="removeFromCart(${item.id})">Remove</button>
         </div>
     `).join('');
+
+    // Add event listeners for all buttons
+    cartContainer.querySelectorAll('.quantity-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const id = parseInt(btn.dataset.id);
+            const item = cart.find(item => item.id === id);
+            if (item) {
+                if (btn.classList.contains('minus')) {
+                    updateQuantity(id, item.quantity - 1);
+                } else {
+                    updateQuantity(id, item.quantity + 1);
+                }
+            }
+        });
+    });
+
+    cartContainer.querySelectorAll('.remove-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const id = parseInt(btn.dataset.id);
+            removeFromCart(id);
+        });
+    });
 }
 
 function updateQuantity(productId, newQuantity) {
@@ -119,10 +141,10 @@ function proceedToCheckout() {
         return;
     }
 
-    // Track checkout start
+   /* // Track checkout start
     if (window.userTracker) {
         window.userTracker.trackCheckoutStart(cart);
-    }
+    }*/
 
     // Hide cart section and show payment section
     const cartSection = document.querySelector('.cart-items');
@@ -223,27 +245,22 @@ function setupPaymentForms() {
 }
 
 function processPayment(paymentMethod) {
-    try {
         // Show loading state
-        const submitButton = document.querySelector(`#${paymentMethod === 'card' ? 'complete-payment' : paymentMethod + '-complete-payment'}`);
-        if (submitButton) {
-            const originalText = submitButton.textContent;
-            submitButton.textContent = 'Processing...';
-            submitButton.disabled = true;
+    const submitButton = document.querySelector(`#${paymentMethod === 'card' ? 'complete-payment' : paymentMethod + '-complete-payment'}`);
+    if (submitButton) {
+        const originalText = submitButton.textContent;
+        submitButton.textContent = 'Processing...';
+        submitButton.disabled = true;
 
-            // Simulate payment processing
-            setTimeout(() => {
-                // Reset button state
-                submitButton.textContent = originalText;
-                submitButton.disabled = false;
+        // Simulate payment processing
+        setTimeout(() => {
+            // Reset button state
+            submitButton.textContent = originalText;
+            submitButton.disabled = false;
 
-                // Show success message
-                showPaymentSuccess(paymentMethod);
-            }, 2000);
-        }
-    } catch (error) {
-        console.error('Payment processing error:', error);
-        alert('Error processing payment. Please try again.');
+            // Show success message
+            showPaymentSuccess(paymentMethod);
+        }, 2000);
     }
 }
 
