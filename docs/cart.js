@@ -63,8 +63,8 @@ function loadCartItems() {
     cartContainer.querySelectorAll('.quantity-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             console.log("button clicked:", btn);
-            const id = parseInt(btn.dataset.id);
-            const item = cart.find(item => item.id === id);
+            const id = btn.dataset.id;
+            const item = cart.find(item => item.id == id);
             if (item) {
                 if (btn.classList.contains('minus')) {
                     updateQuantity(id, item.quantity - 1);
@@ -78,7 +78,7 @@ function loadCartItems() {
     cartContainer.querySelectorAll('.remove-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             console.log("button clicked:", btn);
-            const id = parseInt(btn.dataset.id);
+            const id = btn.dataset.id;
             removeFromCart(id);
         });
     });
@@ -91,7 +91,7 @@ function updateQuantity(productId, newQuantity) {
         return;
     }
 
-    const item = cart.find(item => item.id === productId);
+    const item = cart.find(item => item.id == productId);
     if (item) {
         item.quantity = newQuantity;
         localStorage.setItem(`techstore_cart_${username}`, JSON.stringify(cart));
@@ -150,11 +150,6 @@ function proceedToCheckout() {
         alert('Your cart is empty!');
         return;
     }
-
-   /* // Track checkout start
-    if (window.userTracker) {
-        window.userTracker.trackCheckoutStart(cart);
-    }*/
 
     // Hide cart section and show payment section
     const cartSection = document.querySelector('.cart-items');
@@ -287,10 +282,8 @@ function showPaymentSuccess(paymentMethod) {
         date: new Date().toISOString()
     };
 
-    // Track order completion
-    if (window.userTracker) {
-        window.userTracker.trackOrderComplete(orderId, orderTotal, paymentMethod);
-    }
+    // Order completion logged to console
+    console.log('Order completed:', { orderId, orderTotal, paymentMethod });
 
     // Save order to localStorage (in real app, this would go to backend)
     const orders = JSON.parse(localStorage.getItem('orders') || '[]');

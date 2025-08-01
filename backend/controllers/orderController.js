@@ -18,6 +18,7 @@ const createOrder = async (req, res) => {
       return res.status(400).json({ message: 'No order items' });
     }
 
+    // Step 1: Create the order
     const order = await Order.create({
       userId: req.user.id,
       shippingAddress,
@@ -25,6 +26,7 @@ const createOrder = async (req, res) => {
       totalPrice,
     }, { transaction: t });
 
+    // Step 2: Add all items to order_items
     await Promise.all(orderItems.map(item => {
       return OrderItem.create({
         name: item.name,
@@ -36,8 +38,18 @@ const createOrder = async (req, res) => {
       }, { transaction: t });
     }));
 
+    // Step 3: Clear shopping cart for this user
+    await sequelize.query(`
+      DELETE FROM shopping_carts
+      WHERE user_id = ?`, {
+      replacements: [req.user.id],
+      transaction: t
+    });
+
+    // Step 4: Commit transaction
     await t.commit();
 
+    // Step 5: Return order with included items
     const createdOrder = await Order.findByPk(order.id, {
       include: [{ model: OrderItem, as: 'orderItems' }]
     });

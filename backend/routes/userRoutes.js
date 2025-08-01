@@ -1,19 +1,41 @@
-const express = require('express');
-const router = express.Router();
-const { 
-  registerUser, 
-  loginUser, 
-  getUserProfile 
-} = require('../controllers/userController');
-const { protect } = require('../middleware/middleware.js');
+// controllers/userController.js
 
-// Route for user registration
-router.post('/', registerUser);
+const { User } = require('../models');
+const jwt = require('jsonwebtoken');
 
-// Route for user login
-router.post('/login', loginUser);
+// Utility to generate JWT token
+const generateToken = (user) => {
+  return jwt.sign({ id: user.id, email: user.email }, process.env.JWT_SECRET, {
+    expiresIn: '7d'
+  });
+};
 
-// Route for getting user profile (protected)
-router.get('/profile', protect, getUserProfile);
+// POST /api/users/login
+const loginUser = async (req, res) => {
+  const { email, password } = req.body;
 
-module.exports = router;
+  try {
+    const user = await User.findOne({ where: { email } });
+
+    if (!user || user.password !== password) {
+      return res.status(401).json({ message: 'Invalid email or password' });
+    }
+
+    const token = generateToken(user);
+
+    res.status(200).json({
+      id: user.id,
+      name: user.username,
+      email: user.email,
+      token
+    });
+  } catch (error) {
+    console.error('Login failed:', error.message);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+module.exports = {
+  loginUser,
+  // other controllers...
+};

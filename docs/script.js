@@ -88,7 +88,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialize other components
     window.techStoreCart = new TechStoreCart();
-    
+    window.techStoreCart.setupCartButtonHandlers();
     // Setup header user info (without logout button)
     displayHeaderUserInfo();
     
@@ -241,14 +241,14 @@ function createTopRightLogoutPanel() {
     if (existingPanel) existingPanel.remove();
 
     const userData = JSON.parse(localStorage.getItem('techstore_user') || '{}');
-    if (!loginData.isLoggedIn) return;
+    if (!userData.isLoggedIn) return;
 
     const logoutPanel = document.createElement('div');
     logoutPanel.id = 'top-right-logout';
     logoutPanel.className = 'button-group-panel';
 
     logoutPanel.innerHTML = `
-        <button class="btn-done"><span style="margin-right:6px;">👤</span>${loginData.name}</button>
+        <button class="btn-done"><span style="margin-right:6px;">👤</span>${userData.name}</button>
         <button class="btn-logout" onclick="handleTopRightLogout()">Logout</button>
     `;
 
@@ -258,7 +258,7 @@ function createTopRightLogoutPanel() {
 // Enhanced top-right logout handler
 function handleTopRightLogout() {
     const userData = JSON.parse(localStorage.getItem('techstore_user') || '{}');
-    const userName = loginData.name || 'User';
+    const userName = userData.name || 'User';
     
     // Confirm logout
     if (!confirm(`Are you sure you want to logout, ${userName}?`)) {
@@ -303,301 +303,83 @@ function handleTopRightLogout() {
 // Function to setup login form submission
 function setupLoginForm() {
     const loginForm = document.getElementById('loginForm');
-    
+
     if (loginForm) {
-        loginForm.addEventListener('submit', function(event) {
+        loginForm.addEventListener('submit', async function (event) {
             event.preventDefault();
-            
-            // Get form values
-            const name = document.getElementById('name').value;
+
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
-            
+
             // Validate form
-            if (!name || !email || !password) {
+            if (!email || !password) {
                 toast.show('Please fill in all fields', 'error', 3000);
                 return;
             }
-            
-            // Create login data
-            const loginTime = new Date().toLocaleString();
-            const userData = {
-                name,
-                email,
-                loginTime,
-                isLoggedIn: true
-            };
-            
-            // Save login data
-            localStorage.setItem('techstore_user', JSON.stringify(loginData));
-            
-            // Show success message
-            toast.show(`Welcome, ${name}! Login successful.`, 'success', 3000);
-            
-            // Update header with actual username
-            const headerUserName = document.getElementById('header-user-name');
-            if (headerUserName) {
-                headerUserName.textContent = name;
-            }
-            
-            // Hide login form and show user section
-            const loginSection = document.getElementById('login-section');
-            if (loginSection) {
-                loginSection.classList.add('hidden');
-                loginSection.style.display = 'none';
-            }
-            
-            // Show hero section
-            const heroSection = document.getElementById('hero-section');
-            if (heroSection) {
-                heroSection.classList.remove('hidden');
-                heroSection.style.display = 'block';
-            }
 
-            // Create top-right logout panel with actual username
-            createTopRightLogoutPanel();
+            try {
+                // ✅ Call backend to login and receive token
+                const result = await authAPI.login(email, password); // { token, username, email }
+
+                // Save user data and token to localStorage
+                const userData = {
+                    token: result.token,
+                    name: result.username || 'User',
+                    email: result.email,
+                    loginTime: new Date().toLocaleString(),
+                    isLoggedIn: true
+                };
+
+                localStorage.setItem('techstore_user', JSON.stringify(userData));
+
+                // Show success message
+                toast.show(`Welcome, ${userData.name}! Login successful.`, 'success', 3000);
+
+                // Update header
+                const headerUserName = document.getElementById('header-user-name');
+                if (headerUserName) {
+                    headerUserName.textContent = userData.name;
+                }
+
+                // Hide login section
+                const loginSection = document.getElementById('login-section');
+                if (loginSection) {
+                    loginSection.classList.add('hidden');
+                    loginSection.style.display = 'none';
+                }
+
+                // Show hero section
+                const heroSection = document.getElementById('hero-section');
+                if (heroSection) {
+                    heroSection.classList.remove('hidden');
+                    heroSection.style.display = 'block';
+                }
+
+                // Show logout panel
+                createTopRightLogoutPanel();
+            } catch (error) {
+                toast.show(`Login failed: ${error.message}`, 'error', 3000);
+            }
         });
     }
 }
+
 
 // TechStore E-commerce Platform
 // Custom shopping cart implementation
 
 class TechStoreCart {
     constructor() {
-        this.cartItems = JSON.parse(localStorage.getItem(CART_KEY)) || [];
-        this.initialize();
+        this.cartItems = this.getCart();
     }
 
-    initialize() {
-        this.setupEventHandlers();
-        this.updateCartDisplay();
-        this.initializeProductButtons();
+    getCart() {
+        return JSON.parse(localStorage.getItem('cart') || '[]');
     }
 
-    initializeProductButtons() {
-        // Check if we're on the product page and restore quantity controls for items already in cart
-        const currentFile = getCurrentPageName();
-        if (currentFile.includes('product-local.html')) {
-            const productCards = document.querySelectorAll('.product-card');
-            productCards.forEach(card => {
-                const name = card.querySelector('h4').textContent;
-                const item = this.cartItems.find(item => item.name === name);
-                if (item) {
-                    this.replaceWithQuantityControls(card, name);
-                }
-            });
-        }
-    }
-
-    setupEventHandlers() {
-        // Add to cart buttons on products page
-        this.attachEventListeners();
-
-        // Checkout button
-        const checkoutBtn = document.querySelector('#checkout-btn');
-        if (checkoutBtn) {
-            checkoutBtn.addEventListener('click', () => this.showPaymentSection());
-        }
-
-        // Payment form handlers
-        this.setupPaymentHandlers();
-
-        // Initial cart rendering if on cart page
-        const currentFile = getCurrentPageName();
-        if (currentFile.includes('cart.html')) {
-            this.renderCartItems();
-            this.updateTotal();
-        }
-    }
-
-    attachEventListeners() {
-        // Handle Add to Cart buttons (product page) - prevent duplicate listeners
-        document.querySelectorAll('.product-card button').forEach(button => {
-            if (button.textContent.includes('Add to Cart') && !button.hasAttribute('data-listener-attached')) {
-                button.addEventListener('click', (e) => this.addToCart(e));
-                button.setAttribute('data-listener-attached', 'true');
-            }
-        });
-
-        // Handle Remove buttons (cart page)
-        this.attachRemoveListeners();
-    }
-
-    addToCart(event) {
-        const productCard = event.target.closest('.product-card');
-        const name = productCard.querySelector('h4').textContent;
-        const price = productCard.querySelector('p').textContent;
-        const imgElement = productCard.querySelector('img');
-        const imgSrc = imgElement ? imgElement.src : '';
-        const alt = imgElement ? imgElement.alt : name;
-
-        // Determine category from product name for proper SVG fallback
-        let category = 'generic';
-        const productName = name.toLowerCase();
-        
-        if (productName.includes('ryzen') || productName.includes('intel') || productName.includes('cpu') || productName.includes('processor')) {
-            category = 'processors';
-        } else if (productName.includes('rtx') || productName.includes('gtx') || productName.includes('nvidia') || productName.includes('amd') || productName.includes('gpu') || productName.includes('graphics')) {
-            category = 'graphics';
-        } else if (productName.includes('ram') || productName.includes('memory') || productName.includes('ddr') || productName.includes('corsair') || productName.includes('kingston')) {
-            category = 'memory';
-        } else if (productName.includes('cooler') || productName.includes('fan') || productName.includes('cooling') || productName.includes('noctua') || productName.includes('arctic')) {
-            category = 'cooling';
-        } else if (productName.includes('keyboard') || productName.includes('mouse') || productName.includes('headset') || productName.includes('logitech') || productName.includes('razer')) {
-            category = 'peripherals';
-        }
-
-        // Check if item already exists in cart
-        const existingItem = this.cartItems.find(item => item.name === name);
-        
-        if (existingItem) {
-            // Increase quantity if item exists
-            existingItem.quantity = (existingItem.quantity || 1) + 1;
-            toast.show(`${name} quantity increased! (${existingItem.quantity}) 🛒`, 'success', 3000);
-        } else {
-            // Add new item with quantity 1 and category
-            const productItem = {
-                id: Date.now() + Math.random(),
-                name,
-                price,
-                imgSrc: imgSrc && imgSrc !== window.location.href ? imgSrc : '',
-                alt,
-                category: category, // Store category for cart display
-                quantity: 1
-            };
-            
-            this.cartItems.push(productItem);
-            toast.show(`${name} added to cart! 🛒`, 'success', 3000);
-        }
-
-        this.saveCartData();
-        
-        // Replace button with quantity controls for this product
-        this.replaceWithQuantityControls(productCard, name);
-    }
-
-    replaceWithQuantityControls(productCard, productName) {
-        const button = productCard.querySelector('button');
-        const item = this.cartItems.find(item => item.name === productName);
-        
-        if (item && button && !productCard.querySelector('.product-quantity-controls')) {
-            button.outerHTML = `
-                <div class="product-quantity-controls">
-                    <button class="product-quantity-btn decrease-btn" data-product="${productName}">-</button>
-                    <span class="product-quantity-display">${item.quantity || 1}</span>
-                    <button class="product-quantity-btn increase-btn" data-product="${productName}">+</button>
-                </div>
-            `;
-            
-            // Attach new event listeners with a small delay to ensure DOM is updated
-            setTimeout(() => {
-                this.attachProductQuantityListeners();
-            }, 100);
-        }
-    }
-
-    attachProductQuantityListeners() {
-        // Remove existing listeners first to prevent duplicates
-        document.querySelectorAll('.product-quantity-btn').forEach(button => {
-            // Clone the button to remove all event listeners
-            const newButton = button.cloneNode(true);
-            button.parentNode.replaceChild(newButton, button);
-        });
-        
-        // Attach fresh event listeners
-        document.querySelectorAll('.product-quantity-btn').forEach(button => {
-            button.addEventListener('click', (e) => this.handleProductQuantityChange(e));
-        });
-    }
-
-    handleProductQuantityChange = (event) => {
-        event.preventDefault();
-        event.stopPropagation();
-        
-        const productName = event.target.getAttribute('data-product');
-        const isIncrease = event.target.classList.contains('increase-btn');
-        const item = this.cartItems.find(item => item.name === productName);
-        
-        if (!item) return;
-
-        const previousQuantity = item.quantity || 1;
-
-        if (isIncrease) {
-            item.quantity = previousQuantity + 1;
-            toast.show(`${productName} quantity increased! (${item.quantity}) 🛒`, 'success', 2000);
-        } else {
-            if (previousQuantity > 1) {
-                item.quantity = previousQuantity - 1;
-                toast.show(`${productName} quantity decreased! (${item.quantity}) 🛒`, 'info', 2000);
-            } else {
-                // Remove item and restore Add to Cart button
-                this.cartItems = this.cartItems.filter(cartItem => cartItem.name !== productName);
-                toast.show(`${productName} removed from cart! 🗑️`, 'warning', 2000);
-                this.restoreAddToCartButton(productName);
-                this.saveCartData();
-                return;
-            }
-        }
-
-        // Update quantity display immediately
-        const quantityDisplay = event.target.parentElement.querySelector('.product-quantity-display');
-        if (quantityDisplay) {
-            quantityDisplay.textContent = item.quantity;
-        }
-
-        this.saveCartData();
-    }
-
-    restoreAddToCartButton(productName) {
-        const productCards = document.querySelectorAll('.product-card');
-        productCards.forEach(card => {
-            const name = card.querySelector('h4').textContent;
-            if (name === productName) {
-                const quantityControls = card.querySelector('.product-quantity-controls');
-                if (quantityControls) {
-                    quantityControls.outerHTML = '<button>Add to Cart</button>';
-                    // Re-attach event listener for the new button
-                    this.attachEventListeners();
-                }
-            }
-        });
-    }
-
-    removeFromCart(event) {
-        const productCard = event.target.closest('.product-card');
-        const itemId = productCard.getAttribute('data-item-id');
-        
-        if (itemId) {
-            // Remove specific item by ID
-            this.cartItems = this.cartItems.filter(item => item.id != itemId);
-        } else {
-            // Fallback: remove first item with matching name
-            const name = productCard.querySelector('h4').textContent;
-            const itemIndex = this.cartItems.findIndex(item => item.name === name);
-            if (itemIndex > -1) {
-                this.cartItems.splice(itemIndex, 1);
-            }
-        }
-        
-        this.saveCartData();
-        this.updateCartDisplay();
-        
-        // Show toast notification
-        toast.show(`Product removed from cart`);
-    }
-
-    saveCartData() {
-        localStorage.setItem(CART_KEY, JSON.stringify(this.cartItems));
-    }
-
-    updateCartDisplay() {
-        // Update cart page if we're on it
-        const currentFile = getCurrentPageName();
-        if (currentFile.includes('cart.html')) {
-            this.renderCartItems();
-            this.updateTotal();
-        }
+    saveCart(cart) {
+        localStorage.setItem('cart', JSON.stringify(cart));
+        this.cartItems = cart;
     }
 
     renderCartItems() {
@@ -610,10 +392,9 @@ class TechStoreCart {
         }
 
         productGrid.innerHTML = this.cartItems.map(item => {
-            // Use CategoryDetector utility for category and SVG determination
             const category = CategoryDetector.detectCategory(item.name, item.category);
             const fallbackImage = CategoryDetector.getCategoryImage(category);
-            
+
             return `
                 <div class="product-card" data-item-id="${item.id}" data-category="${category}">
                     ${item.imgSrc && item.imgSrc !== 'undefined' && item.imgSrc !== '' ? 
@@ -632,466 +413,99 @@ class TechStoreCart {
             `;
         }).join('');
 
-        // Re-attach event listeners to new buttons
         this.attachRemoveListeners();
         this.attachQuantityListeners();
     }
 
     attachRemoveListeners() {
-        // Add event listeners specifically for remove buttons in cart
-        document.querySelectorAll('.remove-btn').forEach(button => {
-            button.addEventListener('click', (e) => this.removeFromCart(e));
+        const removeBtns = document.querySelectorAll('.remove-btn');
+        removeBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const productCard = e.target.closest('.product-card');
+                const itemId = productCard?.dataset.itemId;
+                if (itemId) this.removeFromCart(itemId);
+            });
         });
     }
 
     attachQuantityListeners() {
-        // Add event listeners for quantity control buttons
-        document.querySelectorAll('.quantity-btn').forEach(button => {
-            button.addEventListener('click', (e) => this.updateQuantity(e));
-        });
-    }
+        const buttons = document.querySelectorAll('.quantity-btn');
+        buttons.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const productCard = e.target.closest('.product-card');
+                const itemId = productCard?.dataset.itemId;
+                const action = e.target.dataset.action;
 
-    updateQuantity(event) {
-        const productCard = event.target.closest('.product-card');
-        const itemId = productCard.getAttribute('data-item-id');
-        const action = event.target.getAttribute('data-action');
-        
-        const item = this.cartItems.find(item => item.id == itemId);
-        if (!item) return;
-
-        if (action === 'increase') {
-            item.quantity = (item.quantity || 1) + 1;
-            toast.show(`${item.name} quantity increased! (${item.quantity}) 🛒`, 'success', 2000);
-        } else if (action === 'decrease') {
-            if (item.quantity > 1) {
-                item.quantity -= 1;
-                toast.show(`${item.name} quantity decreased! (${item.quantity}) 🛒`, 'info', 2000);
-            } else {
-                // Remove item if quantity would become 0
-                this.cartItems = this.cartItems.filter(cartItem => cartItem.id != itemId);
-                toast.show(`${item.name} removed from cart! 🗑️`, 'warning', 2000);
-            }
-        }
-
-        this.saveCartData();
-        this.updateCartDisplay();
-    }
-
-    updateTotal() {
-        const totalElement = document.querySelector('#cart-total');
-        if (!totalElement) return;
-
-        const total = this.cartItems.reduce((sum, item) => {
-            const price = parseFloat(String(item.price).replace(/[₹$,]/g, '')) || 0;
-            const quantity = item.quantity || 1;
-            return sum + (price * quantity);
-        }, 0);
-
-        const totalItems = this.cartItems.reduce((sum, item) => sum + (item.quantity || 1), 0);
-        totalElement.textContent = `Total: ₹${total.toLocaleString()} (${totalItems} items)`;
-    }
-
-    showPaymentSection() {
-        if (this.cartItems.length === 0) {
-            toast.show('Your cart is empty! Add some items first 🛒', 'warning', 3000);
-            return;
-        }
-
-        // Hide cart sections and show payment section
-        const cartSection = document.querySelector('.cart-items');
-        const checkoutSection = document.querySelector('.checkout');
-        const paymentSection = document.querySelector('#payment-section');
-
-        if (cartSection) cartSection.style.display = 'none';
-        if (checkoutSection) checkoutSection.style.display = 'none';
-        if (paymentSection) {
-            paymentSection.style.display = 'block';
-            this.updatePaymentSummary();
-        }
-
-        // Scroll to payment section
-        paymentSection.scrollIntoView({ behavior: 'smooth' });
-    }
-
-    setupPaymentHandlers() {
-        // Payment method selection
-        document.addEventListener('change', (e) => {
-            if (e.target.name === 'payment-method') {
-                this.switchPaymentMethod(e.target.value);
-            }
-        });
-
-        // Back to cart buttons for all payment methods
-        const backButtons = ['#back-to-cart', '#upi-back-to-cart', '#netbanking-back-to-cart', '#cod-back-to-cart'];
-        backButtons.forEach(selector => {
-            const btn = document.querySelector(selector);
-            if (btn) {
-                btn.addEventListener('click', () => this.backToCart());
-            }
-        });
-
-        // Payment form submissions for all methods
-        const paymentForms = [
-            { selector: '.card-payment-form', handler: (e) => this.processPayment(e) },
-            { selector: '.upi-payment-form', handler: (e) => this.processUPIPayment(e) },
-            { selector: '.netbanking-payment-form', handler: (e) => this.processNetBankingPayment(e) },
-            { selector: '.cod-payment-form', handler: (e) => this.processCODPayment(e) }
-        ];
-
-        paymentForms.forEach(form => {
-            const formElement = document.querySelector(form.selector);
-            if (formElement) {
-                formElement.addEventListener('submit', form.handler);
-            }
-        });
-
-        // Input formatting
-        this.setupInputFormatting();
-    }
-
-    switchPaymentMethod(method) {
-        // Hide all payment forms
-        const forms = ['card-form', 'upi-form', 'netbanking-form', 'cod-form'];
-        forms.forEach(formId => {
-            const form = document.querySelector(`#${formId}`);
-            if (form) form.style.display = 'none';
-        });
-
-        // Show selected payment form
-        const selectedForm = document.querySelector(`#${method}-form`);
-        if (selectedForm) {
-            selectedForm.style.display = 'block';
-        }
-
-        // Update summary for COD
-        this.updatePaymentSummary(method === 'cod');
-    }
-
-    updatePaymentSummary(isCOD = false) {
-        const subtotal = this.cartItems.reduce((sum, item) => {
-            const price = parseFloat(String(item.price).replace(/[₹$,]/g, '')) || 0;
-            const quantity = item.quantity || 1;
-            return sum + (price * quantity);
-        }, 0);
-
-        const shipping = 99;
-        const codCharges = isCOD ? 40 : 0;
-        const tax = Math.round(subtotal * 0.18);
-        const total = subtotal + shipping + codCharges + tax;
-
-        // Update all payment summaries
-        const summaryElements = [
-            { prefix: 'payment', isCOD: false },
-            { prefix: 'upi', isCOD: false },
-            { prefix: 'netbanking', isCOD: false },
-            { prefix: 'cod', isCOD: true }
-        ];
-
-        summaryElements.forEach(summary => {
-            const currentTotal = summary.isCOD ? (subtotal + shipping + 40 + tax) : total;
-            
-            const subtotalEl = document.querySelector(`#${summary.prefix}-subtotal`);
-            const taxEl = document.querySelector(`#${summary.prefix}-tax`);
-            const totalEl = document.querySelector(`#${summary.prefix}-final-total`);
-
-            if (subtotalEl) subtotalEl.textContent = `₹${subtotal.toLocaleString()}`;
-            if (taxEl) taxEl.textContent = `₹${tax.toLocaleString()}`;
-            if (totalEl) totalEl.textContent = `₹${currentTotal.toLocaleString()}`;
-        });
-
-        // Update shipping display for COD in main payment section
-        const shippingEl = document.querySelector('.summary-row:nth-child(2) span:last-child');
-        if (shippingEl) {
-            shippingEl.textContent = isCOD ? '₹139 (₹99 + ₹40 COD)' : '₹99';
-        }
-    }
-
-    backToCart() {
-        const cartSection = document.querySelector('.cart-items');
-        const checkoutSection = document.querySelector('.checkout');
-        const paymentSection = document.querySelector('#payment-section');
-
-        if (cartSection) cartSection.style.display = 'block';
-        if (checkoutSection) checkoutSection.style.display = 'block';
-        if (paymentSection) paymentSection.style.display = 'none';
-
-        // Scroll back to cart
-        if (cartSection) {
-            cartSection.scrollIntoView({ behavior: 'smooth' });
-        }
-    }
-
-    processPayment(event) {
-        event.preventDefault();
-        
-        const paymentMethod = document.querySelector('input[name="payment-method"]:checked').value;
-        const total = document.querySelector('#payment-final-total').textContent;
-
-        // Simulate payment processing
-        toast.show('Processing payment... 🔄', 'info', 2000);
-
-        setTimeout(() => {
-            toast.show(`Payment successful! Order confirmed for ${total} 🎉`, 'success', 4000);
-            this.completeOrder(total, this.getPaymentMethodName(paymentMethod));
-        }, 3000);
-    }
-
-    processUPIPayment(event) {
-        event.preventDefault();
-        
-        const upiId = document.querySelector('#upi-id').value;
-        const total = document.querySelector('#upi-final-total').textContent;
-
-        if (!upiId) {
-            toast.show('Please enter a valid UPI ID 📱', 'warning', 3000);
-            return;
-        }
-
-        // Simulate UPI payment processing
-        toast.show('Redirecting to UPI app... 📱', 'info', 2000);
-
-        setTimeout(() => {
-            toast.show(`UPI payment successful! Order confirmed for ${total} 🎉`, 'success', 4000);
-            this.completeOrder(total, 'UPI Payment');
-        }, 3000);
-    }
-
-    processNetBankingPayment(event) {
-        event.preventDefault();
-        
-        const selectedBank = document.querySelector('#bank-select').value;
-        const total = document.querySelector('#netbanking-final-total').textContent;
-
-        if (!selectedBank) {
-            toast.show('Please select your bank 🏦', 'warning', 3000);
-            return;
-        }
-
-        // Simulate net banking payment processing
-        toast.show('Redirecting to bank website... 🏦', 'info', 2000);
-
-        setTimeout(() => {
-            toast.show(`Net banking payment successful! Order confirmed for ${total} 🎉`, 'success', 4000);
-            this.completeOrder(total, 'Net Banking');
-        }, 3000);
-    }
-
-    processCODPayment(event) {
-        event.preventDefault();
-        
-        const phone = document.querySelector('#cod-phone').value;
-        const address = document.querySelector('#cod-address').value;
-        const total = document.querySelector('#cod-final-total').textContent;
-
-        if (!phone || !address) {
-            toast.show('Please fill in contact number and delivery address 📦', 'warning', 3000);
-            return;
-        }
-
-        if (phone.length !== 10) {
-            toast.show('Please enter a valid 10-digit mobile number 📱', 'warning', 3000);
-            return;
-        }
-
-        // Simulate COD order processing
-        toast.show('Confirming COD order... 🚚', 'info', 2000);
-
-        setTimeout(() => {
-            toast.show(`COD order confirmed! Total: ${total} 🎉`, 'success', 4000);
-            this.completeOrder(total, 'Cash on Delivery');
-        }, 2000);
-    }
-
-    completeOrder(total, paymentMethod) {
-        // Save order to payment history
-        const order = this.saveOrderToHistory(total, paymentMethod);
-        
-        // Clear cart after successful payment
-        this.cartItems = [];
-        this.saveCartData();
-        
-        // Show receipt instead of redirecting
-        setTimeout(() => {
-            this.showReceipt(order);
-        }, 2000);
-    }
-
-    saveOrderToHistory(total, paymentMethod) {
-        const order = {
-            id: 'ORD' + Date.now(),
-            date: new Date().toLocaleString(),
-            total: total,
-            paymentMethod: paymentMethod,
-            status: paymentMethod === 'Cash on Delivery' ? 'pending' : 'completed',
-            items: [...this.cartItems], // Copy current cart items
-            itemCount: this.cartItems.reduce((sum, item) => sum + (item.quantity || 1), 0)
-        };
-
-        // Get existing order history
-        const orderHistory = JSON.parse(localStorage.getItem(ORDER_HISTORY_KEY) || '[]');
-
-        // Add new order to the beginning of the array
-        orderHistory.unshift(order);
-        
-        // Keep only last 10 orders to avoid storage issues
-        if (orderHistory.length > 10) {
-            orderHistory.splice(10);
-        }
-        
-        // Save updated history
-        localStorage.setItem(ORDER_HISTORY_KEY, JSON.stringify(orderHistory));
-        
-        // Return the order for receipt display
-        return order;
-    }
-
-    getPaymentMethodName(method) {
-        const methods = {
-            'card': 'Credit/Debit Card',
-            'upi': 'UPI Payment',
-            'netbanking': 'Net Banking',
-            'cod': 'Cash on Delivery'
-        };
-        return methods[method] || method;
-    }
-
-    setupInputFormatting() {
-        // Card number formatting
-        const cardNumber = document.querySelector('#card-number');
-        if (cardNumber) {
-            cardNumber.addEventListener('input', (e) => {
-                let value = e.target.value.replace(/\s/g, '').replace(/[^0-9]/gi, '');
-                let formattedValue = value.match(/.{1,4}/g)?.join(' ') || value;
-                e.target.value = formattedValue;
-            });
-        }
-
-        // Expiry date formatting
-        const expiryDate = document.querySelector('#expiry-date');
-        if (expiryDate) {
-            expiryDate.addEventListener('input', (e) => {
-                let value = e.target.value.replace(/\D/g, '');
-                if (value.length >= 2) {
-                    value = value.substring(0, 2) + '/' + value.substring(2, 4);
+                if (itemId && action === 'increase') {
+                    this.increaseQuantity(itemId);
+                } else if (itemId && action === 'decrease') {
+                    this.decreaseQuantity(itemId);
                 }
-                e.target.value = value;
             });
-        }
+        });
+    }
 
-        // CVV formatting (numbers only)
-        const cvv = document.querySelector('#cvv');
-        if (cvv) {
-            cvv.addEventListener('input', (e) => {
-                e.target.value = e.target.value.replace(/[^0-9]/g, '');
-            });
-        }
-
-        // Phone number formatting for COD
-        const codPhone = document.querySelector('#cod-phone');
-        if (codPhone) {
-            codPhone.addEventListener('input', (e) => {
-                e.target.value = e.target.value.replace(/[^0-9]/g, '');
-            });
-        }
-
-        // PIN code formatting
-        const pincode = document.querySelector('#billing-pincode');
-        if (pincode) {
-            pincode.addEventListener('input', (e) => {
-                e.target.value = e.target.value.replace(/[^0-9]/g, '');
-            });
+    increaseQuantity(productId) {
+        const cart = this.getCart();
+        const index = cart.findIndex(item => item.id == productId);
+        if (index !== -1) {
+            cart[index].quantity = (cart[index].quantity || 1) + 1;
+            this.saveCart(cart);
+            this.renderCartItems();
         }
     }
 
-    showReceipt(order) {
-        // Hide all cart sections
-        const cartSections = ['#cart-items-section', '#payment-section'];
-        cartSections.forEach(selector => {
-            const section = document.querySelector(selector);
-            if (section) section.style.display = 'none';
-        });
-
-        // Create or show receipt section
-        let receiptSection = document.querySelector('#receipt-section');
-        if (!receiptSection) {
-            receiptSection = document.createElement('section');
-            receiptSection.id = 'receipt-section';
-            receiptSection.className = 'receipt-section';
-            
-            // Try to append to main, fallback to body
-            const mainElement = document.querySelector('main');
-            if (mainElement) {
-                mainElement.appendChild(receiptSection);
+    decreaseQuantity(productId) {
+        const cart = this.getCart();
+        const index = cart.findIndex(item => item.id == productId);
+        if (index !== -1) {
+            const qty = cart[index].quantity || 1;
+            if (qty > 1) {
+                cart[index].quantity -= 1;
             } else {
-                document.body.appendChild(receiptSection);
+                cart.splice(index, 1);
             }
+            this.saveCart(cart);
+            this.renderCartItems();
         }
+    }
 
-        // Generate receipt HTML
-        const itemsList = order.items.map(item => `
-            <div class="receipt-item">
-                <span class="item-name">${item.name}</span>
-                <span class="item-quantity">x${item.quantity || 1}</span>
-                <span class="item-price">${item.price}</span>
-            </div>
-        `).join('');
+    removeFromCart(productId) {
+        const updatedCart = this.cartItems.filter(item => item.id != productId);
+        this.saveCart(updatedCart);
+        this.renderCartItems();
+    }
 
-        receiptSection.innerHTML = `
-            <div class="receipt-container">
-                <div class="receipt-header">
-                    <h2>🧾 Order Receipt</h2>
-                    <div class="receipt-status ${order.status}">
-                        ${order.status === 'completed' ? '✅ Payment Confirmed' : '⏳ Payment Pending'}
-                    </div>
-                </div>
-                
-                <div class="receipt-details">
-                    <div class="receipt-row">
-                        <span class="label">Order ID:</span>
-                        <span class="value">${order.id}</span>
-                    </div>
-                    <div class="receipt-row">
-                        <span class="label">Date & Time:</span>
-                        <span class="value">${order.date}</span>
-                    </div>
-                    <div class="receipt-row">
-                        <span class="label">Payment Method:</span>
-                        <span class="value">${order.paymentMethod}</span>
-                    </div>
-                </div>
+    // ✅ NEW METHOD ADDED HERE
+    setupCartButtonHandlers() {
+        const addToCartButtons = document.querySelectorAll('.add-to-cart');
 
-                <div class="receipt-items">
-                    <h3>📦 Order Items</h3>
-                    ${itemsList}
-                </div>
+        addToCartButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const itemData = {
+                    id: button.dataset.id,
+                    name: button.dataset.name,
+                    price: button.dataset.price,
+                    imgSrc: button.dataset.img,
+                    quantity: 1,
+                    category: button.dataset.category
+                };
 
-                <div class="receipt-total">
-                    <div class="total-row">
-                        <span class="total-label">Total Amount:</span>
-                        <span class="total-amount">${order.total}</span>
-                    </div>
-                </div>
+                const existing = this.cartItems.find(item => item.id == itemData.id);
+                if (existing) {
+                    existing.quantity += 1;
+                } else {
+                    this.cartItems.push(itemData);
+                }
 
-                <div class="receipt-message">
-                    <p>🎉 Thank you for shopping with TechStore!</p>
-                    <p>Your order has been ${order.status}. You will receive an email confirmation shortly.</p>
-                </div>
-
-                <div class="receipt-actions">
-                    <button class="btn" onclick="window.print()" style="background: #27ae60;">🖨️ Print Receipt</button>
-                    <button class="btn" onclick="location.href='index.html'" style="background: #3498db;">🏠 Back to Home</button>
-                    <button class="btn" onclick="location.href='products.html'" style="background: #e67e22;">🛍️ Continue Shopping</button>
-                </div>
-            </div>
-        `;
-
-        receiptSection.style.display = 'block';
-        receiptSection.scrollIntoView({ behavior: 'smooth' });
-        
-        // Show a toast message as well
-        toast.show('Receipt displayed successfully! 🧾', 'success', 3000);
+                this.saveCart(this.cartItems);
+                alert('Item added to cart');
+            });
+        });
     }
 }
+
+
 
 // Product Detail Modal Functions
 function showProductDetail(productName, price, description, imageSrc) {
@@ -1162,7 +576,7 @@ function setupImageErrorHandling() {
 // Login form handling will be managed by main DOMContentLoaded listener
 
 // Function to display user details in top right only
-function displayUserDetails(loginData, showHistory = false) {
+function displayUserDetails(userData, showHistory = false) {
     const loginSection = document.getElementById('login-section');
     const userDetailsSection = document.getElementById('user-details');
     const heroSection = document.getElementById('hero-section');
@@ -1196,7 +610,7 @@ function displayUserDetails(loginData, showHistory = false) {
 }
 
 // Function to update top-right panel with user info
-function updateTopRightPanel(loginData) {
+function updateTopRightPanel(userData) {
     // Remove any existing panel
     const existingPanel = document.getElementById('top-right-logout');
     if (existingPanel) existingPanel.remove();
@@ -1207,9 +621,9 @@ function updateTopRightPanel(loginData) {
 
 // Function to check login status on page load
 function checkLoginStatus() {
-    const userDataData = JSON.parse(localStorage.getItem('techstore_user') || '{}');
+    const userData = JSON.parse(localStorage.getItem('techstore_user') || '{}');
     
-    if (loginData.isLoggedIn) {
+    if (userData.isLoggedIn) {
         // Hide center login and show only top-right user info
         const loginSection = document.getElementById('login-section');
         if (loginSection) {
@@ -1361,10 +775,10 @@ class PaymentHistory {
     }
 
     displayPaymentHistory() {
-        const userDataData = JSON.parse(localStorage.getItem('techstore_user') || '{}');
+        const userData = JSON.parse(localStorage.getItem('techstore_user') || '{}');
         const historySection = document.querySelector('#payment-history');
 
-        if (userDataData.isLoggedIn && historySection) {
+        if (userData.isLoggedIn && historySection) {
             const orderHistory = JSON.parse(localStorage.getItem(ORDER_HISTORY_KEY) || '[]');
 
             if (orderHistory.length > 0) {
@@ -1691,14 +1105,7 @@ function addToCart(productCard) {
     
     // Save cart
     localStorage.setItem(CART_KEY, JSON.stringify(cartItems));
-    
-    // Track add to cart action
-    if (window.userTracker) {
-        // Extract product ID from card if available
-        const productId = productCard.dataset.productId || cartItem.id;
-        window.userTracker.trackAddToCart(productId, 1);
-    }
-    
+       
     // Show success message
     const toast = new ToastNotification();
     toast.show(`${name} added to cart! 🛒`, 'success', 2000);

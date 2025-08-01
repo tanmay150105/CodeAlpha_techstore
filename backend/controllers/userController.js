@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken');
-const { User } = require('../models');
+const { User, sequelize } = require('../models');
 const { userValidation } = require('../utils/validation');
 
 // Generate JWT token
@@ -61,11 +61,26 @@ const loginUser = async (req, res) => {
     const user = await User.findOne({ where: { email: validEmail } });
 
     if (user && (await user.matchPassword(validPassword))) {
+      const token = generateToken(user.id);
+
+      // Log session
+      await sequelize.query(`
+        INSERT INTO user_sessions (user_id, session_token, ip_address, user_agent)
+        VALUES (?, ?, ?, ?)
+      `, {
+        replacements: [
+          user.id,
+          token,
+          req.ip || req.headers['x-forwarded-for'] || 'unknown',
+          req.headers['user-agent'] || 'unknown'
+        ]
+      });
+
       res.json({
         id: user.id,
         name: user.name,
         email: user.email,
-        token: generateToken(user.id),
+        token
       });
     } else {
       res.status(401).json({ message: 'Invalid email or password' });

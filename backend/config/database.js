@@ -1,7 +1,6 @@
+// backend/config/database.js
 const { Sequelize } = require('sequelize');
-require('dotenv').config();
 
-// Database configuration
 const sequelize = new Sequelize({
   host: process.env.MYSQL_HOST || 'localhost',
   port: process.env.DB_PORT || 3306,
@@ -23,14 +22,13 @@ const sequelize = new Sequelize({
   }
 });
 
-// Test database connection
 const testConnection = async () => {
   try {
     await sequelize.authenticate();
     console.log('✅ Database connection established successfully');
     return true;
   } catch (error) {
-    console.error('❌ Unable to connect to database:', error.message);
+    console.error('❌ DB connection failed:', error.message);
     return false;
   }
 };
@@ -39,3 +37,4 @@ module.exports = {
   sequelize,
   testConnection
 };
+
