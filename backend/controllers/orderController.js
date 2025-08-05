@@ -20,38 +20,28 @@ const createOrder = async (req, res) => {
 
     // Step 1: Create the order
     const order = await Order.create({
-      userId: req.user.id,
-      shippingAddress,
-      paymentMethod,
-      totalPrice,
+      user_id: req.user.id,
+      total_amount: totalPrice,
+      shipping_address: shippingAddress,
+      payment_method: paymentMethod,
     }, { transaction: t });
 
     // Step 2: Add all items to order_items
     await Promise.all(orderItems.map(item => {
       return OrderItem.create({
-        name: item.name,
+        order_id: order.id,
+        product_id: item.productId,
         quantity: item.quantity,
         price: item.price,
-        image: item.image,
-        productId: item.productId,
-        orderId: order.id,
       }, { transaction: t });
     }));
 
-    // Step 3: Clear shopping cart for this user
-    await sequelize.query(`
-      DELETE FROM shopping_carts
-      WHERE user_id = ?`, {
-      replacements: [req.user.id],
-      transaction: t
-    });
-
-    // Step 4: Commit transaction
+    // Step 3: Commit transaction (cart clearing is handled on frontend)
     await t.commit();
 
-    // Step 5: Return order with included items
+    // Step 4: Return order with included items
     const createdOrder = await Order.findByPk(order.id, {
-      include: [{ model: OrderItem, as: 'orderItems' }]
+      include: [{ model: OrderItem, as: 'order_items' }]
     });
 
     res.status(201).json(createdOrder);
@@ -68,7 +58,7 @@ const getOrderById = async (req, res) => {
       include: [
         {
           model: OrderItem,
-          as: 'orderItems',
+          as: 'order_items',
           include: [{ model: Product }]
         },
         {
@@ -79,7 +69,7 @@ const getOrderById = async (req, res) => {
     });
 
     if (!order) return res.status(404).json({ message: 'Order not found' });
-    if (order.userId !== req.user.id) {
+    if (order.user_id !== req.user.id) {
       return res.status(403).json({ message: 'Not authorized to access this order' });
     }
 
@@ -95,7 +85,7 @@ const updateOrderToPaid = async (req, res) => {
     const order = await Order.findByPk(req.params.id);
 
     if (!order) return res.status(404).json({ message: 'Order not found' });
-    if (order.userId !== req.user.id) {
+    if (order.user_id !== req.user.id) {
       return res.status(403).json({ message: 'Not authorized to update this order' });
     }
 
@@ -119,9 +109,9 @@ const updateOrderToPaid = async (req, res) => {
 const getUserOrders = async (req, res) => {
   try {
     const orders = await Order.findAll({
-      where: { userId: req.user.id },
-      include: [{ model: OrderItem, as: 'orderItems' }],
-      order: [['createdAt', 'DESC']]
+      where: { user_id: req.user.id },
+      include: [{ model: OrderItem, as: 'order_items' }],
+      order: [['id', 'DESC']] // Use id instead of createdAt since timestamps are disabled
     });
 
     res.json(orders);

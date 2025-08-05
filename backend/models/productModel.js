@@ -40,9 +40,6 @@ const Product = sequelize.define('Product', {
     type: DataTypes.INTEGER,
     defaultValue: 0,
   },
-  specifications: {
-    type: DataTypes.JSON,
-  },
 }, {
   tableName: 'products',
   timestamps: true,

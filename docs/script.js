@@ -1,7 +1,22 @@
-const userData = JSON.parse(localStorage.getItem('techstore_user'));
-const username = userData?.username || 'guest';
-const CART_KEY = `techstore_cart_${username}`;
-const ORDER_HISTORY_KEY = `techstore_order_history_${username}`;
+// Get user data only if user is actually logged in
+function getUserData() {
+    const loginData = JSON.parse(localStorage.getItem('techstore_user_login') || '{}');
+    return loginData.isLoggedIn ? loginData : null;
+}
+
+function getUsername() {
+    const userData = getUserData();
+    return userData?.name || 'guest';
+}
+
+// Helper function to get the primary cart key (call this each time, don't store as constant)
+function getPrimaryCartKey() {
+    const loginData = JSON.parse(localStorage.getItem('techstore_user_login') || '{}');
+    const username = loginData.name || 'guest';
+    return `techstore_cart_${username}`;
+}
+
+const ORDER_HISTORY_KEY = `techstore_order_history_${getUsername()}`;
 // Toast Notification System
 class ToastNotification {
     constructor() {
@@ -240,15 +255,15 @@ function createTopRightLogoutPanel() {
     const existingPanel = document.getElementById('top-right-logout');
     if (existingPanel) existingPanel.remove();
 
-    const userData = JSON.parse(localStorage.getItem('techstore_user') || '{}');
-    if (!userData.isLoggedIn) return;
+    const loginData = JSON.parse(localStorage.getItem('techstore_user_login') || '{}');
+    if (!loginData.isLoggedIn) return;
 
     const logoutPanel = document.createElement('div');
     logoutPanel.id = 'top-right-logout';
     logoutPanel.className = 'button-group-panel';
 
     logoutPanel.innerHTML = `
-        <button class="btn-done"><span style="margin-right:6px;">👤</span>${userData.name}</button>
+        <button class="btn-done"><span style="margin-right:6px;">👤</span>${loginData.name}</button>
         <button class="btn-logout" onclick="handleTopRightLogout()">Logout</button>
     `;
 
@@ -257,8 +272,8 @@ function createTopRightLogoutPanel() {
 
 // Enhanced top-right logout handler
 function handleTopRightLogout() {
-    const userData = JSON.parse(localStorage.getItem('techstore_user') || '{}');
-    const userName = userData.name || 'User';
+    const loginData = JSON.parse(localStorage.getItem('techstore_user_login') || '{}');
+    const userName = loginData.name || 'User';
     
     // Confirm logout
     if (!confirm(`Are you sure you want to logout, ${userName}?`)) {
@@ -330,16 +345,13 @@ function setupLoginForm() {
                     isLoggedIn: true
                 };
 
-                localStorage.setItem('techstore_user', JSON.stringify(userData));
+                localStorage.setItem('techstore_user_login', JSON.stringify(userData));
 
                 // Show success message
                 toast.show(`Welcome, ${userData.name}! Login successful.`, 'success', 3000);
 
-                // Update header
-                const headerUserName = document.getElementById('header-user-name');
-                if (headerUserName) {
-                    headerUserName.textContent = userData.name;
-                }
+                // Update header to show user info
+                displayHeaderUserInfo();
 
                 // Hide login section
                 const loginSection = document.getElementById('login-section');
@@ -362,8 +374,109 @@ function setupLoginForm() {
             }
         });
     }
+    
+    // Setup registration form
+    const registrationForm = document.getElementById('registrationForm');
+    if (registrationForm) {
+        registrationForm.addEventListener('submit', async function (event) {
+            event.preventDefault();
+
+            const name = document.getElementById('reg-name').value;
+            const email = document.getElementById('reg-email').value;
+            const password = document.getElementById('reg-password').value;
+
+            // Log the data for debugging
+            console.log('Registration data:', { name, email, password: password.replace(/./g, '*') });
+
+            // Validate form
+            if (!name || !email || !password) {
+                toast.show('Please fill in all fields', 'error', 3000);
+                return;
+            }
+
+            // Check validation requirements on frontend
+            if (name.trim().length < 2) {
+                toast.show('Name must be at least 2 characters long', 'error', 3000);
+                return;
+            }
+            
+            if (!/^[a-zA-Z\s]+$/.test(name.trim())) {
+                toast.show('Name can only contain letters and spaces', 'error', 3000);
+                return;
+            }
+            
+            if (password.length < 6) {
+                toast.show('Password must be at least 6 characters long', 'error', 3000);
+                return;
+            }
+            
+            if (!/(?=.*[a-zA-Z])/.test(password)) {
+                toast.show('Password must contain at least one letter', 'error', 3000);
+                return;
+            }
+
+            try {
+                // Call backend to register user
+                const result = await authAPI.register({ name, email, password });
+
+                // Show success message
+                toast.show(`Registration successful! Welcome, ${result.username}!`, 'success', 3000);
+
+                // Auto-login after successful registration
+                const userData = {
+                    token: result.token,
+                    name: result.username || 'User',
+                    email: result.email,
+                    loginTime: new Date().toLocaleString(),
+                    isLoggedIn: true
+                };
+
+                localStorage.setItem('techstore_user_login', JSON.stringify(userData));
+
+                // Update header to show user info
+                displayHeaderUserInfo();
+
+                // Hide registration section
+                const registrationSection = document.getElementById('registration-section');
+                if (registrationSection) {
+                    registrationSection.classList.add('hidden');
+                    registrationSection.style.display = 'none';
+                }
+
+                // Show hero section
+                const heroSection = document.getElementById('hero-section');
+                if (heroSection) {
+                    heroSection.classList.remove('hidden');
+                    heroSection.style.display = 'block';
+                }
+
+                // Show logout panel
+                createTopRightLogoutPanel();
+            } catch (error) {
+                console.error('Registration error:', error);
+                
+                // Handle validation errors specifically
+                if (error.message.includes('Validation failed') && error.response?.data?.errors) {
+                    const errorMessages = error.response.data.errors.map(err => `${err.field}: ${err.message}`).join('<br>');
+                    toast.show(`Registration failed:<br>${errorMessages}`, 'error', 5000);
+                } else {
+                    toast.show(`Registration failed: ${error.message}`, 'error', 3000);
+                }
+            }
+        });
+    }
 }
 
+// Form switching functions
+function showRegistrationForm() {
+    document.getElementById('login-section').classList.add('hidden');
+    document.getElementById('registration-section').classList.remove('hidden');
+}
+
+function showLoginForm() {
+    document.getElementById('registration-section').classList.add('hidden');
+    document.getElementById('login-section').classList.remove('hidden');
+}
 
 // TechStore E-commerce Platform
 // Custom shopping cart implementation
@@ -374,11 +487,19 @@ class TechStoreCart {
     }
 
     getCart() {
-        return JSON.parse(localStorage.getItem('cart') || '[]');
+        // Use the same cart key as the rest of the application
+        const loginData = JSON.parse(localStorage.getItem('techstore_user_login') || '{}');
+        const username = loginData.name || 'guest';
+        const cartKey = `techstore_cart_${username}`;
+        return JSON.parse(localStorage.getItem(cartKey) || '[]');
     }
 
     saveCart(cart) {
-        localStorage.setItem('cart', JSON.stringify(cart));
+        // Use the same cart key as the rest of the application
+        const loginData = JSON.parse(localStorage.getItem('techstore_user_login') || '{}');
+        const username = loginData.name || 'guest';
+        const cartKey = `techstore_cart_${username}`;
+        localStorage.setItem(cartKey, JSON.stringify(cart));
         this.cartItems = cart;
     }
 
@@ -621,9 +742,9 @@ function updateTopRightPanel(userData) {
 
 // Function to check login status on page load
 function checkLoginStatus() {
-    const userData = JSON.parse(localStorage.getItem('techstore_user') || '{}');
+    const loginData = JSON.parse(localStorage.getItem('techstore_user_login') || '{}');
     
-    if (userData.isLoggedIn) {
+    if (loginData.isLoggedIn) {
         // Hide center login and show only top-right user info
         const loginSection = document.getElementById('login-section');
         if (loginSection) {
@@ -653,8 +774,8 @@ function checkLoginStatus() {
 // Function to handle logout
 function handleLogout() {
     // Get user data before clearing
-    const userData = JSON.parse(localStorage.getItem('techstore_user') || '{}');
-    const userName = userData.name || 'User';
+    const loginData = JSON.parse(localStorage.getItem('techstore_user_login') || '{}');
+    const userName = loginData.name || 'User';
 
     // Clear login data
     localStorage.removeItem('techstore_user_login');
@@ -702,23 +823,25 @@ function handleLogout() {
     toast.show(`Goodbye, ${userName}! You have been logged out successfully! 👋`, 'info', 3000);
 }
 
-// Function to display header user info on all pages (simplified - no logout button)
+// Function to display header user info only when logged in
 function displayHeaderUserInfo() {
-    const userData = JSON.parse(localStorage.getItem('techstore_user') || '{}');
+    const loginData = JSON.parse(localStorage.getItem('techstore_user_login') || '{}');
     const headerUserInfo = document.getElementById('header-user-info');
     const headerUserName = document.getElementById('header-user-name');
 
-    if (userData.isLoggedIn && headerUserInfo) {
+    // Only show user info if actually logged in
+    if (loginData.isLoggedIn && headerUserInfo && headerUserName) {
         headerUserInfo.classList.remove('hidden');
-        if (headerUserName) {
-            headerUserName.textContent = userData.name || 'User';
-        }
-        // Remove any logout button from header since we have top-right logout
+        headerUserName.textContent = loginData.name || 'User';
+        
+        // Setup logout button functionality
         const headerLogout = document.getElementById('header-logout');
         if (headerLogout) {
-            headerLogout.style.display = 'none';
+            headerLogout.style.display = 'inline-block';
+            headerLogout.onclick = handleLogout;
         }
     } else if (headerUserInfo) {
+        // Hide user info if not logged in
         headerUserInfo.classList.add('hidden');
     }
 }
@@ -775,10 +898,10 @@ class PaymentHistory {
     }
 
     displayPaymentHistory() {
-        const userData = JSON.parse(localStorage.getItem('techstore_user') || '{}');
+        const loginData = JSON.parse(localStorage.getItem('techstore_user_login') || '{}');
         const historySection = document.querySelector('#payment-history');
 
-        if (userData.isLoggedIn && historySection) {
+        if (loginData.isLoggedIn && historySection) {
             const orderHistory = JSON.parse(localStorage.getItem(ORDER_HISTORY_KEY) || '[]');
 
             if (orderHistory.length > 0) {
@@ -1002,58 +1125,92 @@ function loadCartItems() {
     
     if (!cartContainer) return;
     
-    const cartData = localStorage.getItem(CART_KEY);
+    // Try multiple cart storage locations to ensure we get all items
+    const loginData = JSON.parse(localStorage.getItem('techstore_user_login') || '{}');
+    const username = loginData.name || 'guest';
     
-    if (!cartData) {
+    let cartItems = [];
+    
+    // Check all possible cart keys and merge items
+    const cartKeys = [
+        `techstore_cart_${username}`,
+        'techstore_cart', 
+        'cart'
+    ];
+    
+    cartKeys.forEach(key => {
+        const data = localStorage.getItem(key);
+        if (data) {
+            try {
+                const items = JSON.parse(data);
+                if (Array.isArray(items) && items.length > 0) {
+                    cartItems = cartItems.concat(items);
+                }
+            } catch (e) {
+                console.warn(`Error parsing cart data from ${key}:`, e);
+            }
+        }
+    });
+    
+    // Remove duplicates based on item id or name
+    const uniqueItems = [];
+    const seen = new Set();
+    
+    cartItems.forEach(item => {
+        const key = item.id || item.name;
+        if (!seen.has(key)) {
+            seen.add(key);
+            uniqueItems.push(item);
+        } else {
+            // If we find a duplicate, merge quantities
+            const existing = uniqueItems.find(ui => (ui.id || ui.name) === key);
+            if (existing) {
+                existing.quantity = (existing.quantity || 1) + (item.quantity || 1);
+            }
+        }
+    });
+    
+    if (uniqueItems.length === 0) {
         cartContainer.innerHTML = '<p style="text-align: center; color: #569cd6; font-size: 1.2rem;">Your cart is empty. <a href="products.html">Start shopping!</a></p>';
         if (cartTotalEl) cartTotalEl.textContent = 'Total: ₹0';
         return;
     }
     
-    try {
-        const cartItems = JSON.parse(cartData);
+    let total = 0;
+    
+    cartContainer.innerHTML = uniqueItems.map((item, index) => {
+        const itemTotal = item.price * item.quantity;
+        total += itemTotal;
         
-        if (cartItems.length === 0) {
-            cartContainer.innerHTML = '<p style="text-align: center; color: #569cd6; font-size: 1.2rem;">Your cart is empty. <a href="products.html">Start shopping!</a></p>';
-            if (cartTotalEl) cartTotalEl.textContent = 'Total: ₹0';
-            return;
-        }
+        // Use CategoryDetector utility for category and SVG determination
+        const category = CategoryDetector.detectCategory(item.name, item.category);
+        const fallbackImage = CategoryDetector.getCategoryImage(category);
         
-        let total = 0;
-        
-        cartContainer.innerHTML = cartItems.map((item, index) => {
-            const itemTotal = item.price * item.quantity;
-            total += itemTotal;
-            
-            // Use CategoryDetector utility for category and SVG determination
-            const category = CategoryDetector.detectCategory(item.name, item.category);
-            const fallbackImage = CategoryDetector.getCategoryImage(category);
-            
-            return `
-                <div class="cart-item" data-index="${index}" data-category="${category}">
-                    ${item.image && item.image !== 'undefined' && item.image !== '' ? 
-                        `<img src="${item.image}" alt="${item.name}" onerror="this.src='${fallbackImage}'">` : 
-                        `<img src="${fallbackImage}" alt="${item.name}">`
-                    }
-                    <h3>${item.name}</h3>
-                    <p class="price">₹${item.price.toLocaleString()}</p>
-                    <div class="quantity-controls">
-                        <button class="qty-btn" onclick="updateQuantity(${index}, -1)">-</button>
-                        <span class="quantity">Qty: ${item.quantity}</span>
-                        <button class="qty-btn" onclick="updateQuantity(${index}, 1)">+</button>
-                    </div>
-                    <button class="remove-btn" onclick="removeFromCart(${index})">Remove Item</button>
+        return `
+            <div class="cart-item" data-index="${index}" data-category="${category}">
+                ${item.image && item.image !== 'undefined' && item.image !== '' ? 
+                    `<img src="${item.image}" alt="${item.name}" onerror="this.src='${fallbackImage}'">` : 
+                    `<img src="${fallbackImage}" alt="${item.name}">`
+                }
+                <h3>${item.name}</h3>
+                <p class="price">₹${item.price.toLocaleString()}</p>
+                <div class="quantity-controls">
+                    <button class="qty-btn" onclick="updateQuantity(${index}, -1)">-</button>
+                    <span class="quantity">Qty: ${item.quantity}</span>
+                    <button class="qty-btn" onclick="updateQuantity(${index}, 1)">+</button>
                 </div>
-            `;
-        }).join('');
-        
-        if (cartTotalEl) {
-            cartTotalEl.textContent = `Total: ₹${total.toLocaleString()}`;
-        }
-        
-    } catch (e) {
-        cartContainer.innerHTML = '<p style="text-align: center; color: #ff6b6b;">Error loading cart items.</p>';
+                <button class="remove-btn" onclick="removeFromCart(${index})">Remove Item</button>
+            </div>
+        `;
+    }).join('');
+    
+    if (cartTotalEl) {
+        cartTotalEl.textContent = `Total: ₹${total.toLocaleString()}`;
     }
+    
+    // Save the consolidated cart to the primary location
+    const primaryCartKey = `techstore_cart_${username}`;
+    localStorage.setItem(primaryCartKey, JSON.stringify(uniqueItems));
 }
 
 // Enhanced Add to Cart with better price parsing
@@ -1080,7 +1237,8 @@ function addToCart(productCard) {
     
     // Get existing cart
     let cartItems = [];
-    const existingCart = localStorage.getItem(CART_KEY);
+    const cartKey = getPrimaryCartKey();
+    const existingCart = localStorage.getItem(cartKey);
     
     if (existingCart) {
         try {
@@ -1104,7 +1262,7 @@ function addToCart(productCard) {
     }
     
     // Save cart
-    localStorage.setItem(CART_KEY, JSON.stringify(cartItems));
+    localStorage.setItem(cartKey, JSON.stringify(cartItems));
        
     // Show success message
     const toast = new ToastNotification();
@@ -1112,7 +1270,11 @@ function addToCart(productCard) {
 }
 
 function updateQuantity(index, change) {
-    const cartData = localStorage.getItem(CART_KEY);
+    const loginData = JSON.parse(localStorage.getItem('techstore_user_login') || '{}');
+    const username = loginData.name || 'guest';
+    const primaryCartKey = `techstore_cart_${username}`;
+    
+    const cartData = localStorage.getItem(primaryCartKey);
     if (!cartData) return;
     
     try {
@@ -1125,16 +1287,20 @@ function updateQuantity(index, change) {
                 cartItems.splice(index, 1);
             }
             
-            localStorage.setItem(CART_KEY, JSON.stringify(cartItems));
+            localStorage.setItem(primaryCartKey, JSON.stringify(cartItems));
             loadCartItems();
         }
     } catch (e) {
-        // Silent error handling - log only in development
+        console.error('Error updating quantity:', e);
     }
 }
 
 function removeFromCart(index) {
-    const cartData = localStorage.getItem(CART_KEY);
+    const loginData = JSON.parse(localStorage.getItem('techstore_user_login') || '{}');
+    const username = loginData.name || 'guest';
+    const primaryCartKey = `techstore_cart_${username}`;
+    
+    const cartData = localStorage.getItem(primaryCartKey);
     if (!cartData) return;
     
     try {
@@ -1144,19 +1310,20 @@ function removeFromCart(index) {
             const itemName = cartItems[index].name;
             cartItems.splice(index, 1);
             
-            localStorage.setItem(CART_KEY, JSON.stringify(cartItems));
+            localStorage.setItem(primaryCartKey, JSON.stringify(cartItems));
             loadCartItems();
             
             const toast = new ToastNotification();
             toast.show(`${itemName} removed from cart! 🗑️`, 'info', 2000);
         }
     } catch (e) {
-        // Silent error handling - log only in development
+        console.error('Error removing item:', e);
     }
 }
 
 function showPaymentSection() {
-    const cartData = localStorage.getItem(CART_KEY);
+    const cartKey = getPrimaryCartKey();
+    const cartData = localStorage.getItem(cartKey);
     
     if (!cartData) {
         const toast = new ToastNotification();
@@ -1209,47 +1376,99 @@ function showMessage(message, type = 'success') {
 
 // Proceed to Checkout: send cart data to backend
 async function proceedToCheckout() {
-    const cart = JSON.parse(localStorage.getItem(CART_KEY) || '[]');
-    if (cart.length === 0) {
-        alert('Your cart is empty!');
+    // Check if user is logged in
+    const loginData = JSON.parse(localStorage.getItem('techstore_user_login') || '{}');
+    if (!loginData.isLoggedIn) {
+        toast.show('Please login to place an order!', 'error', 3000);
         return;
     }
+
+    // Try multiple cart key formats to ensure we get the cart
+    const username = loginData.name || 'guest';
+    let cart = JSON.parse(localStorage.getItem(`techstore_cart_${username}`) || '[]');
+    
+    // Fallback to other possible cart keys
+    if (cart.length === 0) {
+        cart = JSON.parse(localStorage.getItem('techstore_cart') || '[]');
+    }
+    if (cart.length === 0) {
+        cart = JSON.parse(localStorage.getItem('cart') || '[]');
+    }
+
+    console.log('Cart data for checkout:', cart);
+
+    if (cart.length === 0) {
+        toast.show('Your cart is empty!', 'warning', 3000);
+        return;
+    }
+
     const orderData = {
         orderItems: cart.map(item => ({
-            productId: item.id,
+            productId: parseInt(item.id) || Math.floor(Math.random() * 1000), // Ensure numeric ID
             name: item.name,
-            quantity: item.quantity,
-            price: item.price,
-            image: item.image || ''
+            quantity: item.quantity || 1,
+            price: parseFloat(item.price) || 0
         })),
-        shippingAddress: "Default Address", // Replace with actual user input if available
-        paymentMethod: "COD", // Or get from user selection
-        totalPrice: cart.reduce((sum, item) => sum + item.price * item.quantity, 0)
+        shippingAddress: "Default Shipping Address", // You can add form for this later
+        paymentMethod: "Cash on Delivery", // You can add selection for this later
+        totalPrice: cart.reduce((sum, item) => sum + (parseFloat(item.price) * (item.quantity || 1)), 0)
     };
+
     try {
-        await orderAPI.createOrder(orderData);
-        alert('Order placed successfully!');
+        console.log('Creating order:', orderData);
+        const result = await orderAPI.createOrder(orderData);
+        
+        // Success!
+        toast.show('🎉 Order placed successfully!', 'success', 4000);
+        
+        // Clear all possible cart keys
+        localStorage.removeItem(`techstore_cart_${username}`);
         localStorage.removeItem('techstore_cart');
-        // Optionally redirect or update UI
-    } 
-    catch (error) {
-    if (
-        error.message.includes('Failed to fetch') || 
-        error.message.includes('NetworkError') || 
-        error.message.includes('500') || 
-        !navigator.onLine
-    ) {
-        showMessage('Unable to connect to server. Please try again later.', 'error');
-    } else {
+        localStorage.removeItem('cart');
+        
+        // Refresh cart display
+        if (typeof loadCartItems === 'function') {
+            loadCartItems();
+        }
+        
+        // Optional: Redirect to success page or show order details
+        setTimeout(() => {
+            window.location.href = 'index.html';
+        }, 2000);
+        
+    } catch (error) {
         console.error('Checkout error:', error);
+        
+        if (error.message.includes('Failed to fetch') || 
+            error.message.includes('NetworkError') || 
+            !navigator.onLine) {
+            toast.show('Unable to connect to server. Please try again later.', 'error', 4000);
+        } else if (error.message.includes('Unauthorized') || error.message.includes('401')) {
+            toast.show('Please login again to place order.', 'error', 3000);
+        } else {
+            toast.show(`Order failed: ${error.message}`, 'error', 4000);
+        }
     }
-}}
+}
 
 // Attach to checkout button if it exists
-const checkoutBtn = document.getElementById('checkout-btn');
-if (checkoutBtn) {
-    checkoutBtn.addEventListener('click', proceedToCheckout);
-}
+document.addEventListener('DOMContentLoaded', function() {
+    // Only attach checkout handler if NOT on cart page (cart.js handles cart page)
+    const currentPage = getCurrentPageName();
+    if (!currentPage.includes('cart.html')) {
+        // Setup checkout button with delay to ensure it's loaded
+        setTimeout(() => {
+            const checkoutBtn = document.getElementById('checkout-btn');
+            if (checkoutBtn) {
+                // Remove any existing listeners
+                checkoutBtn.replaceWith(checkoutBtn.cloneNode(true));
+                const newCheckoutBtn = document.getElementById('checkout-btn');
+                newCheckoutBtn.addEventListener('click', proceedToCheckout);
+                console.log('✅ Checkout button connected (non-cart page)');
+            }
+        }, 1000);
+    }
+});
 
 // Product page functionality
 function initializeProductsPage() {
@@ -1324,24 +1543,23 @@ function displayProducts(products) {
     `).join('');
 
     // Attach event listeners to Add to Cart buttons
-    document.querySelectorAll('.add-to-cart-btn').forEach(btn => {
+        document.querySelectorAll('.add-to-cart-btn').forEach(btn => {
         btn.addEventListener('click', function() {
             const id = this.dataset.id;
             const name = this.dataset.name;
             const price = this.dataset.price;
-            let cart = JSON.parse(localStorage.getItem(CART_KEY) || '[]');
+            const cartKey = getPrimaryCartKey();
+            let cart = JSON.parse(localStorage.getItem(cartKey) || '[]');
             const existing = cart.find(item => item.id === id);
             if (existing) {
                 existing.quantity += 1;
             } else {
                 cart.push({ id, name, price, quantity: 1 });
             }
-            localStorage.setItem(CART_KEY, JSON.stringify(cart));
+            localStorage.setItem(cartKey, JSON.stringify(cart));
             toast.show(`${name} added to cart! 🛒`, 'success', 2000);
         });
-    });
-    
-    // Setup category filters after products are loaded
+    });    // Setup category filters after products are loaded
     setTimeout(() => {
         setupCategoryFilters();
     }, 100);
@@ -1351,7 +1569,8 @@ function displayProducts(products) {
 function renderCartOnCheckout() {
     const cartContainer = document.getElementById('cart-items');
     if (!cartContainer) return;
-    const cart = JSON.parse(localStorage.getItem(CART_KEY) || '[]');
+    const cartKey = getPrimaryCartKey();
+    const cart = JSON.parse(localStorage.getItem(cartKey) || '[]');
     if (cart.length === 0) {
         cartContainer.innerHTML = '<p>Your cart is empty.</p>';
         return;
@@ -1362,3 +1581,44 @@ function renderCartOnCheckout() {
         </div>
     `).join('');
 }
+
+// Debug function to check all cart storage locations
+function debugCartStorage() {
+    const loginData = JSON.parse(localStorage.getItem('techstore_user_login') || '{}');
+    const username = loginData.name || 'guest';
+    
+    console.log('=== CART STORAGE DEBUG ===');
+    console.log('Current user:', username);
+    console.log('Is logged in:', loginData.isLoggedIn);
+    
+    // Check all possible cart storage keys
+    const cartKeys = [
+        `techstore_cart_${username}`,
+        'techstore_cart',
+        'cart'
+    ];
+    
+    cartKeys.forEach(key => {
+        const data = localStorage.getItem(key);
+        console.log(`${key}:`, data ? JSON.parse(data) : 'empty');
+    });
+    
+    console.log('Primary cart key function result:', getPrimaryCartKey());
+    console.log('=== END DEBUG ===');
+}
+
+// Simple function to check all cart-related localStorage items
+window.checkAllCarts = function() {
+    console.log('=== ALL CART STORAGE ===');
+    Object.keys(localStorage).forEach(key => {
+        if (key.includes('cart')) {
+            try {
+                const data = JSON.parse(localStorage.getItem(key));
+                console.log(`${key}:`, data);
+            } catch (e) {
+                console.log(`${key}:`, localStorage.getItem(key));
+            }
+        }
+    });
+    console.log('=== END ALL CARTS ===');
+};

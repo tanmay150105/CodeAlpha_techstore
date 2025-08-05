@@ -101,17 +101,10 @@
   <script src="categoryDetector.js"></script>
   <script src="script.js"></script>
   <script>
-    // Check for logged in user
+    // Check for logged in user on page load
     document.addEventListener('DOMContentLoaded', function() {
-        const headerUserName = document.getElementById('header-user-name');
-        const headerUserInfo = document.getElementById('header-user-info');
-        
-        const userData = JSON.parse(localStorage.getItem('techstore_user'));
-        
-        if (userData && headerUserName && headerUserInfo) {
-            headerUserName.textContent = userData.username;
-            headerUserInfo.classList.remove('hidden');
-        }
+        // Use the displayHeaderUserInfo function from script.js
+        displayHeaderUserInfo();
     });
 </script>
 </body>

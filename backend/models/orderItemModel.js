@@ -38,9 +38,7 @@ const OrderItem = sequelize.define('OrderItem', {
   },
 }, {
   tableName: 'order_items',
-  timestamps: true,
-  createdAt: 'created_at',
-  updatedAt: false, // not present in SQL
+  timestamps: false, // Disable timestamps to avoid column issues
 });
 
 module.exports = OrderItem;

@@ -6,7 +6,7 @@ const API_URL = window.location.hostname === 'localhost' ? 'http://localhost:500
 async function fetchAPI(endpoint, options = {}) {
     try {
         // Get auth token from localStorage if it exists
-        const token =  JSON.parse(localStorage.getItem('techstore_user'))?.token;
+        const token =  JSON.parse(localStorage.getItem('techstore_user_login') || '{}')?.token;
         
         // Set default headers
         const headers = {
@@ -49,7 +49,7 @@ async function fetchAPI(endpoint, options = {}) {
 const authAPI = {
     // Register a new user
     register: async (userData) => {
-        return fetchAPI('/users', {
+        return fetchAPI('/users/register', {
             method: 'POST',
             body: JSON.stringify(userData)
         });

@@ -6,7 +6,12 @@ const { testConnection, sequelize } = require('./config/database');
 const { syncDatabase } = require('./models/index');
 
 // Load environment variables
-dotenv.config();
+dotenv.config({ path: path.join(__dirname, '.env') });
+
+// Import routes
+const userRoutes = require('./routes/userRoutes');
+const productRoutes = require('./routes/productRoutes');
+const orderRoutes = require('./routes/orderRoutes');
 
 const app = express();
 
@@ -37,17 +42,10 @@ app.get('/api/health', async (req, res) => {
   }
 });
 
-// Simple products API endpoint (since routes might be missing)
-app.get('/api/products', async (req, res) => {
-  try {
-    const { Product } = require('./models');
-    const products = await Product.findAll();
-    res.json(products);
-  } catch (error) {
-    console.error('Products API error:', error);
-    res.status(500).json({ error: 'Failed to fetch products' });
-  }
-});
+// API routes
+app.use('/api/users', userRoutes);
+app.use('/api/products', productRoutes);
+app.use('/api/orders', orderRoutes);
 
 // API info endpoint
 app.get('/api', (req, res) => {
@@ -72,6 +70,12 @@ app.listen(PORT, async () => {
   console.log(`🚀 TechStore Server running on port ${PORT}`);
   console.log(`📱 Frontend: http://localhost:${PORT}`);
   console.log(`🔗 API: http://localhost:${PORT}/api`);
+  
+  // Debug environment variables
+  console.log('🔍 Environment variables check:');
+  console.log(`   - NODE_ENV: ${process.env.NODE_ENV}`);
+  console.log(`   - JWT_SECRET: ${process.env.JWT_SECRET ? '✅ Loaded' : '❌ Missing'}`);
+  console.log(`   - MYSQL_DATABASE: ${process.env.MYSQL_DATABASE}`);
   
   await testConnection();
 

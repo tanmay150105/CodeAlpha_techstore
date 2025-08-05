@@ -4,7 +4,10 @@ const { userValidation } = require('../utils/validation');
 
 // Generate JWT token
 const generateToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET, {
+  // Fallback JWT secret if environment variable is not loaded
+  const jwtSecret = process.env.JWT_SECRET || 'techstore_fallback_secret_key_2025_deadline_fix';
+  
+  return jwt.sign({ id }, jwtSecret, {
     expiresIn: process.env.JWT_EXPIRES_IN || '30d',
   });
 };
@@ -29,14 +32,15 @@ const registerUser = async (req, res) => {
     }
 
     const user = await User.create({
-      name: validName,
+      username: validName,
+      full_name: validName,
       email: validEmail,
       password: validPassword,
     });
 
     res.status(201).json({
       id: user.id,
-      name: user.name,
+      username: user.username,
       email: user.email,
       token: generateToken(user.id),
     });
@@ -63,22 +67,9 @@ const loginUser = async (req, res) => {
     if (user && (await user.matchPassword(validPassword))) {
       const token = generateToken(user.id);
 
-      // Log session
-      await sequelize.query(`
-        INSERT INTO user_sessions (user_id, session_token, ip_address, user_agent)
-        VALUES (?, ?, ?, ?)
-      `, {
-        replacements: [
-          user.id,
-          token,
-          req.ip || req.headers['x-forwarded-for'] || 'unknown',
-          req.headers['user-agent'] || 'unknown'
-        ]
-      });
-
       res.json({
         id: user.id,
-        name: user.name,
+        username: user.username,
         email: user.email,
         token
       });
@@ -98,7 +89,7 @@ const getUserProfile = async (req, res) => {
     if (user) {
       res.json({
         id: user.id,
-        name: user.name,
+        username: user.username,
         email: user.email,
       });
     } else {

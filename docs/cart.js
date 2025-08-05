@@ -1,11 +1,17 @@
 (() => {
 // cart.js - Updated with proper payment handling
-const userData = JSON.parse(localStorage.getItem('techstore_user'));
-const username = userData?.username || 'guest';
+const userData = JSON.parse(localStorage.getItem('techstore_user_login') || '{}');
+const username = userData?.name || 'guest';
 let cart = [];
 
 // Load cart on page load
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('Cart page loaded, username:', username);
+    console.log('Looking for cart with keys:', [
+        `techstore_cart_${username}`,
+        'techstore_cart', 
+        'cart'
+    ]);
     loadCartItems();
     updateCartTotal();
     setupEventListeners();
@@ -32,8 +38,51 @@ function setupEventListeners() {
 }
 
 function loadCartItems() {
-    cart = JSON.parse(localStorage.getItem(`techstore_cart_${username}`)) || [];
-    console.log('loadCartItems called, cart =', cart);
+    // Use the same consolidation logic as script.js
+    let cartItems = [];
+    
+    // Check all possible cart keys and merge items
+    const cartKeys = [
+        `techstore_cart_${username}`,
+        'techstore_cart', 
+        'cart'
+    ];
+    
+    cartKeys.forEach(key => {
+        const data = localStorage.getItem(key);
+        if (data) {
+            try {
+                const items = JSON.parse(data);
+                if (Array.isArray(items) && items.length > 0) {
+                    cartItems = cartItems.concat(items);
+                }
+            } catch (e) {
+                console.warn(`Error parsing cart data from ${key}:`, e);
+            }
+        }
+    });
+    
+    // Remove duplicates based on item id or name
+    const uniqueItems = [];
+    const seen = new Set();
+    
+    cartItems.forEach(item => {
+        const key = item.id || item.name;
+        if (!seen.has(key)) {
+            seen.add(key);
+            uniqueItems.push(item);
+        } else {
+            // If we find a duplicate, merge quantities
+            const existing = uniqueItems.find(ui => (ui.id || ui.name) === key);
+            if (existing) {
+                existing.quantity = (existing.quantity || 1) + (item.quantity || 1);
+            }
+        }
+    });
+    
+    cart = uniqueItems;
+    console.log('loadCartItems called, consolidated cart =', cart);
+    
     const cartContainer = document.getElementById('cart-products');
     if (!cartContainer) return;
 
@@ -82,6 +131,10 @@ function loadCartItems() {
             removeFromCart(id);
         });
     });
+    
+    // Save the consolidated cart to the primary location
+    const primaryCartKey = `techstore_cart_${username}`;
+    localStorage.setItem(primaryCartKey, JSON.stringify(cart));
 }
 
 function updateQuantity(productId, newQuantity) {
@@ -94,7 +147,8 @@ function updateQuantity(productId, newQuantity) {
     const item = cart.find(item => item.id == productId);
     if (item) {
         item.quantity = newQuantity;
-        localStorage.setItem(`techstore_cart_${username}`, JSON.stringify(cart));
+        const primaryCartKey = `techstore_cart_${username}`;
+        localStorage.setItem(primaryCartKey, JSON.stringify(cart));
         loadCartItems();
         updateCartTotal();
     }
@@ -103,7 +157,8 @@ function updateQuantity(productId, newQuantity) {
 function removeFromCart(productId) {
     console.log("Removing product from cart:", productId);
     cart = cart.filter(item => item.id !== productId);
-    localStorage.setItem(`techstore_cart_${username}`, JSON.stringify(cart));
+    const primaryCartKey = `techstore_cart_${username}`;
+    localStorage.setItem(primaryCartKey, JSON.stringify(cart));
     loadCartItems();
     updateCartTotal();
 }
@@ -250,55 +305,100 @@ function setupPaymentForms() {
 }
 
 function processPayment(paymentMethod) {
-        // Show loading state
+    // Show loading state
     const submitButton = document.querySelector(`#${paymentMethod === 'card' ? 'complete-payment' : paymentMethod + '-complete-payment'}`);
     if (submitButton) {
         const originalText = submitButton.textContent;
         submitButton.textContent = 'Processing...';
         submitButton.disabled = true;
 
-        // Simulate payment processing
-        setTimeout(() => {
+        // Actually create the order via API
+        createOrderViaAPI(paymentMethod).then(() => {
             // Reset button state
             submitButton.textContent = originalText;
             submitButton.disabled = false;
-
+            
             // Show success message
             showPaymentSuccess(paymentMethod);
-        }, 2000);
+        }).catch(error => {
+            // Reset button state
+            submitButton.textContent = originalText;
+            submitButton.disabled = false;
+            
+            console.error('Payment processing failed:', error);
+            alert('Payment failed: ' + error.message);
+        });
     }
+}
+
+// New function to create order via backend API
+async function createOrderViaAPI(paymentMethod) {
+    // Check if user is logged in
+    const loginData = JSON.parse(localStorage.getItem('techstore_user_login') || '{}');
+    if (!loginData.isLoggedIn) {
+        throw new Error('Please login to place an order');
+    }
+
+    if (cart.length === 0) {
+        throw new Error('Your cart is empty');
+    }
+
+    const orderData = {
+        orderItems: cart.map(item => ({
+            productId: parseInt(item.id) || Math.floor(Math.random() * 1000),
+            name: item.name,
+            quantity: item.quantity || 1,
+            price: parseFloat(item.price) || 0
+        })),
+        shippingAddress: "Default Shipping Address",
+        paymentMethod: paymentMethod,
+        totalPrice: cart.reduce((sum, item) => sum + (parseFloat(item.price) * (item.quantity || 1)), 0)
+    };
+
+    console.log('Creating order via API:', orderData);
+    
+    // Use the orderAPI from api.js (loaded before cart.js)
+    const result = await orderAPI.createOrder(orderData);
+    console.log('Order created successfully:', result);
+    
+    return result;
 }
 
 function showPaymentSuccess(paymentMethod) {
     const orderTotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    const orderId = 'TS' + Date.now(); // Generate simple order ID
 
-    // Create order summary
-    const orderSummary = {
-        orderId: orderId,
-        items: [...cart],
-        total: orderTotal,
-        paymentMethod: paymentMethod,
-        date: new Date().toISOString()
-    };
-
-    // Order completion logged to console
-    console.log('Order completed:', { orderId, orderTotal, paymentMethod });
-
-    // Save order to localStorage (in real app, this would go to backend)
-    const orders = JSON.parse(localStorage.getItem('orders') || '[]');
-    orders.push(orderSummary);
-    localStorage.setItem('orders', JSON.stringify(orders));
-
-    // Clear cart
+    // Clear all possible cart storage locations
+    const username = userData?.name || 'guest';
+    localStorage.removeItem(`techstore_cart_${username}`);
+    localStorage.removeItem('techstore_cart');
+    localStorage.removeItem('cart');
+    
+    // Clear local cart variable
     cart = [];
-    localStorage.setItem('techstore_cart', JSON.stringify(cart));
 
     // Show success message
-    alert(`🎉 Order Placed Successfully!\n\nOrder ID: ${orderId}\nTotal: ₹${orderTotal.toLocaleString()}\nPayment Method: ${paymentMethod.toUpperCase()}\n\nThank you for shopping with TechStore!`);
+    alert(`🎉 Order Placed Successfully!\n\nTotal: ₹${orderTotal.toLocaleString()}\nPayment Method: ${paymentMethod.toUpperCase()}\n\nThank you for shopping with TechStore!`);
 
-    // Redirect to products page
-    window.location.href = 'products.html';
+    // Reload cart display to show empty cart
+    loadCartItems();
+    updateCartTotal();
+    
+    // Hide payment section and show cart section
+    const cartSection = document.querySelector('.cart-items');
+    const checkoutSection = document.querySelector('.checkout');
+    const paymentSection = document.getElementById('payment-section');
+    
+    if (paymentSection) {
+        paymentSection.classList.add('hidden');
+        paymentSection.style.display = 'none';
+    }
+    if (cartSection) cartSection.style.display = 'block';
+    if (checkoutSection) checkoutSection.style.display = 'block';
+
+    // Redirect to home page after a delay
+    setTimeout(() => {
+        window.location.href = 'index.html';
+    }, 3000);
 }
 
 // Export functions for global access
